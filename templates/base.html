@@ -37,14 +37,16 @@
             {% endif %}
         </nav>
 
-        <div class="alter-ego">
-            {% block alter_ego %}
-                {% if alter_ego %}
-                    Acting as a student.<a href="{% url 'home' %}">Return to instructor view</a>
-                {% elif instructor  %}
-                    <a href="{% url 'instructor_dummy_home' %}">Enter student view</a>
-                {% endif %}
-            {% endblock %}
-        </div>
+        {% if alter_ego or instructor %}
+            <div class="alter-ego">
+                {% block alter_ego %}
+                    {% if alter_ego %}
+                        Acting as a student.<a href="{% url 'home' %}">Return to instructor view</a>
+                    {% elif instructor  %}
+                        <a href="{% url 'instructor_dummy_home' %}">Enter student view</a>
+                    {% endif %}
+                {% endblock %}
+            </div>
+        {% endif %}
     </body>
 </html>

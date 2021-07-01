@@ -65,7 +65,8 @@ def view_problem(request, problem_id, attempt_id=None):
             attempt.save()
         return redirect('student_view_problem', problem_id=problem_id)
     else:
-        attempts = list(student.attempts(problem))
+        #attempts = list(student.attempts(problem))
+        attempts = list(ProblemAttempt.objects.filter(student=student, problem=problem))
 
         selected_attempt = None
         if attempt_id:
