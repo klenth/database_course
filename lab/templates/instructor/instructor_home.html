@@ -7,12 +7,15 @@
     <div class="cards">
         <div class="top card">
             <div class="title">Instructor home</div>
-            <p><a href="{% url 'instructor_new_course' %}">New course</a></p>
+            <section class="right">
+                <form action="{% url 'instructor_new_course' %}" method="get" style="display: inline-block;">
+                    <button>New course</button>
+                </form>
+            </section>
         </div>
         {% for course in instructor.courses.all %}
             <div class="card">
                 <div class="title">{{ course.title }}</div>
-                <p><a href="{% url 'instructor_edit_course' course_id=course.id %}">Edit course</a></p>
 
                 {% with enabled_labs=course.labs.all|enabledonly disabled_labs=course.labs.all|disabledonly %}
                     <div class="course labs">
@@ -84,6 +87,16 @@
                         </div>
                     {% endif %}
                 {% endwith %}
+
+                <section class="right">
+                    <form action="{% url 'instructor_edit_course' course_id=course.id %}" method="get" style="display: inline-block;">
+                        <button>Edit course</button>
+                    </form>
+                    <div class="spacer"></div>
+                    <form action="{% url 'instructor_new_lab' course_id=course.id %}" method="get" style="display: inline-block;">
+                        <button>New lab</button>
+                    </form>
+                </section>
             </div>
         {% endfor %}
     </div>
