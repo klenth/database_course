@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% load custom_tags %}
+{% load static %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Instructor home</a>
+    </span>
+    <span class="breadcrumb">
+        {{ lab.course.title }}
+    </span>
+    <span class="breadcrumb">
+        {{ lab.title }}
+    </span>
+{% endblock %}
+
+{% block alter_ego %}
+    <a href="{% url 'student_view_lab' lab_id=lab.id %}">Enter student view</a>
+{% endblock %}
+
+{% block content %}
+    <div class="cards">
+        <div class="card">
+            <div class="title">{{ lab.title }}</div>
+            <div class="lab problems">
+                {% for problem in enabled_problems %}
+                    <a href="{% url 'instructor_view_problem' problem_id=problem.id %}" class="not-shown hand-cursor"><div class="problem">
+                        <div class="title">{{ problem.title }}</div>
+                        <div class="prompt">{{ problem.prompt|default:''|markdown }}</div>
+                        <div class="points">{{ problem.possible_points|default:0 }} point{{ problem.possible_points|default:0|pluralize }}</div>
+                        <div class="controls inline-blocks">
+                            <form action="{% url 'instructor_disable_problem' problem_id=problem.id %}" method="post">
+                                {% csrf_token %}
+                                <button class="image"><img src="{% static 'image/star-solid.svg' %}" alt="Disable problem" title="Disable problem so that it no longer appears for students"></button>
+                            </form>
+                            <form action="{% url 'instructor_duplicate_problem' problem_id=problem.id %}" method="post">
+                                {% csrf_token %}
+                                <button class="image"><img src="{% static 'image/duplicate.svg' %}" alt="Duplicate problem" title="Duplicate problem"></button>
+                            </form>
+                            <div class="spacer"></div>
+                            <form action="{% url 'instructor_delete_problem' problem_id=problem.id %}" method="post">
+                                {% csrf_token %}
+                                <button class="image delete-button"><img src="{% static 'image/bomb.svg' %}" alt="Delete problem" title="Delete problem"></button>
+                            </form>
+                        </div>
+                    </div></a>
+                {% endfor %}
+            </div>
+
+            {% if disabled_problems %}
+                {% if enabled_problems %}
+                    <hr>
+                {% endif %}
+                <div class="section-header">Disabled problems</div>
+                <div class="lab problems">
+                    {% for problem in disabled_problems %}
+                        <a href="{% url 'instructor_view_problem' problem_id=problem.id %}" class="not-shown hand-cursor"><div class="problem">
+                            <div class="title">{{ problem.title }}</div>
+                            <div class="prompt">{{ problem.prompt|default:''|markdown }}</div>
+                            <div class="points">{{ problem.possible_points|default:0 }} point{{ problem.possible_points|default:0|pluralize }}</div>
+                            <div class="controls inline-blocks">
+                                <form action="{% url 'instructor_enable_problem' problem_id=problem.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button class="image"><img src="{% static 'image/star-open.svg' %}" alt="Enable problem" title="Enable problem so that it appears in the list of problems for students"></button>
+                                </form>
+                                <form action="{% url 'instructor_duplicate_problem' problem_id=problem.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button class="image"><img src="{% static 'image/duplicate.svg' %}" alt="Duplicate problem" title="Duplicate problem"></button>
+                                </form>
+                                <div class="spacer"></div>
+                                <form action="{% url 'instructor_delete_problem' problem_id=problem.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button class="image delete-button"><img src="{% static 'image/bomb.svg' %}" alt="Delete problem" title="Delete problem"></button>
+                                </form>
+                            </div>
+                        </div></a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form action="{% url 'instructor_new_problem' lab_id=lab.id %}" method="post">
+                {% csrf_token %}
+                <button>New problem</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{% static 'script/base.js' %}"></script>
+    <script>
+"use strict";
+
+(function() {
+    document.querySelectorAll(".delete-button").forEach(button => button.addEventListener("click", e => {
+        e.preventDefault();
+        showModalMessage("Delete this problem?", {
+        "buttons": [
+            {
+                "text": "Delete",
+                "action": () => {
+                    const form = findAncestor(e.target, e => e.tagName.toLowerCase() === "form");
+                    if (form)
+                        form.submit();
+                    else
+                        console.error("No form ancestor found!");
+                }
+            },
+            {
+                "text": "Cancel",
+            }
+        ]
+        });
+    }));
+})();
+
+    </script>
+{% endblock %}

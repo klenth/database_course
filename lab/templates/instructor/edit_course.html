@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Instructor home</a>
+    </span>
+    <span class="breadcrumb">
+        {% if course %}
+            Edit {{ course.title }}
+        {% else %}
+            New course
+        {% endif %}
+    </span>
+{% endblock %}
+
+{% block content %}
+        <div class="cards">
+        <div class="card edit-course">
+            <div class="title">
+                {% if course %}
+                    Edit course {{ course.title }}
+                {% else %}
+                    New course
+                {% endif %}
+            </div>
+
+            <ul class="errorlist">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+
+            {% if course %}
+                <form action="{% url 'instructor_edit_course' course_id=course.id %}" method="post">
+            {% else %}
+                <form action="{% url 'instructor_new_course' %}" method="post">
+            {% endif %}
+            {% csrf_token %}
+            <table>
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="title-box">Course title</label></th>
+                        <td><input type="text" name="title" id="title-box" autofocus required
+                                    {% if course %}
+                                        value="{{ course_title|default:course.title }}"
+                                    {% else %}
+                                        value="{{ course_title|default:'' }}" placeholder="Enter title..."
+                                    {% endif %}
+                        ></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><button>Submit</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            </form>
+
+{% endblock %}

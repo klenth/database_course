@@ -1,0 +1,5 @@
+__pycache__/
+/db.sqlite3
+/**/settings.py
+/lab/lab_db_settings.py
+/key.secret

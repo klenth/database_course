@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+    <div class="cards">
+        <div class="card">
+            <div class="title">Account setup</div>
+
+            <p>
+                Thank you for creating an account! Please fill out the information below.
+            </p>
+
+            <ul class="errorlist">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+
+            <form action="{% url 'setup_account' link_id=link.id %}" method="post">
+                {% csrf_token %}
+                <dl class="form indented">
+                    <dt><label for="name-box">Name (as you would like it to appear)</label></dt>
+                    <dd><input type="text" id="name-box" name="name" value="{{ name|default_if_none:student.name }}"></dd>
+                    <dt><label for="email-box">Email address (for automated messages)</label></dt>
+                    <dd><input type="email" id="email-box" name="email" value="{{ email|default_if_none:student.email }}" pattern=".+@.+"></dd>
+                    <dt><label for="username-box">Username (for logging into this system)</label></dt>
+                    <dd><input type="text" id="username-box" name="username" value="{{ username|default_if_none:student.username }}"></dd>
+                    <dt><label for="password1-box">Password</label></dt>
+                    <dd><input type="password" id="password1-box" name="password1">
+                        <div class="error-message hidden" id="password-error-messages">
+                            <div id="error-message-length">Password must be at least eight characters long</div>
+                            <div id="error-message-numeric">Password must not be entirely numeric</div>
+                        </div>
+                    </dd>
+                    <dt><label for="password2-box">Again</label></dt>
+                    <dd><input type="password" id="password2-box" name="password2">
+                        <div class="error-message hidden" id="password2-error-message">
+                            Password does not match
+                        </div>
+                    </dd>
+                </dl>
+                <button>Setup account</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{% static 'script/base.js' %}"></script>
+
+    <script>
+"use strict";
+
+(function() {
+    function validate_length(pw) {
+        return pw.length >= 8;
+    }
+
+    function validate_numeric(pw) {
+        return !(/^[0-9]+$/.exec(pw));
+    }
+
+    function validate_pw1(pw_box) {
+        const pw = pw_box.value;
+        let valid = true;
+        const note_length = document.getElementById("error-message-length"),
+              note_numeric = document.getElementById("error-message-numeric");
+        if (pw && !validate_length(pw)) {
+            note_length.classList.remove("hidden");
+            valid = false;
+        } else
+            note_length.classList.add("hidden");
+
+        if (pw && !validate_numeric(pw)) {
+            note_numeric.classList.remove("hidden");
+            valid = false;
+        } else
+            note_numeric.classList.add("hidden");
+
+        if (valid) {
+            document.getElementById("password-error-messages").classList.add("hidden");
+            pw_box.setCustomValidity("");
+        } else {
+            pw_box.setCustomValidity("Password is invalid.");
+            document.getElementById("password-error-messages").classList.remove("hidden");
+        }
+    }
+
+    function validate_pw2(pw1_box, pw2_box) {
+        const pw1 = pw1_box.value,
+              pw2 = pw2_box.value;
+        const valid = (pw2 && (pw2 === pw1));
+
+        if (valid) {
+            pw2_box.setCustomValidity("");
+            $("#password2-error-message").classList.add("hidden");
+        } else {
+            pw2_box.setCustomValidity("Password does not match.");
+            $("#password2-error-message").classList.remove("hidden");
+        }
+    }
+
+    const pw1_box = document.getElementById("password1-box");
+    pw1_box.addEventListener("change", () => validate_pw1(pw1_box));
+
+    const pw2_box = document.getElementById("password2-box");
+    pw2_box.addEventListener("change", () => validate_pw2(pw1_box, pw2_box));
+})();
+    </script>
+{% endblock %}

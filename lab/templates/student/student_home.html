@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% load custom_tags %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        Home
+    </span>
+
+
+{% endblock %}
+
+{% block content %}
+    <div class="cards">
+        {% for course in courses %}
+            <div class="card">
+                <div class="title">{{ course.title }}</div>
+                <div class="course labs">
+                    {% for lab in course.enabled_labs %}
+                        {% with enabled_problems=lab.enabled_problem_count %}
+                            <a href="{% url 'student_view_lab' lab_id=lab.id %}" class="not-shown hand-cursor"><div class="lab">
+                                <div class="title">{{ lab.title }}</div>
+                                <div class="enabled-problem-count">{{ enabled_problems }} problem{{ enabled_problems|pluralize }}</div>
+                                <div class="points">
+                                    <span style="font-size: 1.1rem;">{{ student|scoreonlab:lab|floatformat }}</span>/{{ lab.total_points|floatformat }} point{{ lab.total_points|pluralize }}
+                                </div>
+                            </div></a>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="card">
+                <div class="title">Courses</div>
+                <p>You are not currently enrolled in any classes.</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

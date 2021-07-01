@@ -1,0 +1,617 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Instructor home</a>
+    </span>
+    <span class="breadcrumb">
+        {{ problem.lab.course.title }}
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'instructor_view_lab' lab_id=problem.lab.id %}">{{ problem.lab.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        {{ problem.title }}
+    </span>
+{% endblock %}
+
+{% block alter_ego %}
+    <a href="{% url 'student_view_problem' problem_id=problem.id %}">Enter student view</a>
+{% endblock %}
+
+{% block content %}
+    <div class="cards">
+        <div class="card problem-details">
+            <div class="title">Problem settings</div>
+            <label>
+                <div class="problem-title label">Title</div>
+                <div class="problem-title value">
+                    <input type="text" id="title-box" name="title" value="{{ problem.title }}">
+                </div>
+            </label>
+            <label>
+                <div class="problem-prompt label">Prompt</div>
+                <div class="problem-prompt value">
+                    <div id="prompt-box" class="code-editor">{{ problem.prompt }}</div>
+                    <div class="right">
+                        <div class="progress" id="view-markdown-progress"></div>
+                        <button id="view-markdown-button">Preview</button>
+                    </div>
+                </div>
+            </label>
+            <label>
+                <div class="problem-starter-code label">Starter code</div>
+                <div class="problem-starter-code value">
+                    <div id="starter-code-editor" class="code-editor">{{ problem.starter_code }}</div>
+                </div>
+            </label>
+
+            <div class="controls right">
+                <div id="problem-details-save-progress" class="progress"></div>
+                <button id="problem-details-save-button" class="save">Save</button>
+            </div>
+        </div>
+
+        <div class="card solution">
+            <div class="title">Solution</div>
+            <label>
+                <div class="solution label">Solution</div>
+                <div class="solution value">
+                    <div id="solution-box" class="code-editor">{{ problem.solution }}</div>
+                </div>
+            </label>
+            <label>
+                <div class="after-code label">After code</div>
+                <div class="after-code value">
+                    <div id="after-code-box" class="code-editor">{{ problem.after_code }}</div>
+                </div>
+            </label>
+
+            <div class="controls right">
+                <div id="solution-save-progress" class="progress"></div>
+                <button id="solution-save-button" class="save">Save</button>
+            </div>
+        </div>
+
+        <div class="card database">
+            <div class="title">Database</div>
+
+            <div class="label">Schema</div>
+            <div class="indented">
+                <p>
+                    <span id="schema-filename">
+                        {% if problem.schema %}
+                            <a href="{% url 'instructor_download_schema' problem_id=problem.id %}?download">{{ problem.schema.filename }}</a>
+                        {% else %}
+                            No schema
+                        {% endif %}
+                    </span>
+                    <span id="schema-table-names">
+                        {% if problem.schema %}
+                            ({{ problem.schema.get_table_names|join:', ' }})
+                        {% endif %}
+                    </span>
+                </p>
+                <div>
+                    <button id="load-schema-button">Upload new schema</button>
+                    <div id="schema-file-progress" class="progress"></div>
+                </div>
+            </div>
+
+            <div class="label">Table data</div>
+            <div class="indented">
+                <ul id="data-file-list" class="no-marker"></ul>
+                <div>
+                    <button id="add-data-file">Upload data file</button>
+                    <div id="data-file-progress" class="progress"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card test-cases">
+            <div class="title">Test cases</div>
+            <div id="test-case-list">
+
+            </div>
+            <button id="add-test-case">Add test case</button>
+            <button id="validate-problem">Validate</button>
+        </div>
+    </div>
+
+    <script src="{% static 'script/base.js' %}"></script>
+    <script src="{% static 'script/ace/ace.js' %}"></script>
+    <script>
+"use strict";
+
+(function() {
+    const promptEditor = ace.edit("prompt-box"),
+          starterCodeEditor = ace.edit("starter-code-editor"),
+          solutionEditor = ace.edit("solution-box"),
+          afterCodeEditor = ace.edit("after-code-box");
+    const sqlEditors = [starterCodeEditor, solutionEditor, afterCodeEditor];
+
+    promptEditor.setTheme("ace/theme/sql_lab");
+    promptEditor.session.setMode("ace/mode/markdown");
+    promptEditor.session.setUseWrapMode(true);
+
+    sqlEditors.forEach(e => {
+        e.setTheme("ace/theme/sql_lab");
+        e.session.setMode("ace/mode/sql");
+        e.session.setUseWrapMode(true);
+    });
+
+    function updateProblem(data, contentType, progressIndicator, onComplete) {
+        ajax({
+            "url": "{% url 'ajax_instructor_update_problem' problem_id=problem.id %}",
+            "method": "POST",
+            "body": data,
+            "contentType": contentType,
+            "onError": () => {
+                progressIndicator.classList.add("error");
+                showErrorMessage("Error updating problem: " + data);
+            },
+            "onTimeout": () => {
+                progressIndicator.classList.add("error");
+                showErrorMessage("Timeout updating problem: " + data);
+            },
+            "onComplete": () => {
+                progressIndicator.classList.remove("active");
+                if (onComplete)
+                    onComplete();
+            }
+        });
+
+        progressIndicator.classList.remove("error");
+        progressIndicator.classList.add("active");
+    }
+
+    function updateTestCase(box, data) {
+        // Find the .test-case parent and grab the test case ID from that
+        const testCase = findAncestor(box, e => e.classList.contains("test-case"));
+        if (!testCase || testCase.dataset.testCaseId === undefined)
+            throw new Error("Could not locate a .test-case ancestor with a test case ID");
+
+        const progressIndicator = box.parentElement.querySelector(".progress");
+        data["test_case_id"] = testCase.dataset.testCaseId;
+        ajax({
+            "url": "{% url 'ajax_instructor_update_test_case' problem_id=problem.id %}",
+            "method": "POST",
+            "body": JSON.stringify(data),
+            "contentType": "application/json",
+            "onError": () => {
+                progressIndicator.classList.add("error");
+                showErrorMessage("Error updating test case: " + data);
+            },
+            "onTimeout": () => {
+                progressIndicator.classList.add("error");
+                showErrorMessage("Timeout updating test case: " + data);
+            },
+            "onComplete": () => progressIndicator.classList.remove("active")
+        });
+
+        progressIndicator.classList.remove("error");
+        progressIndicator.classList.add("active");
+    }
+
+    $("#problem-details-save-button").addEventListener("click", () => {
+        const data = {
+            "new_title": $("#title-box").value,
+            "new_prompt": promptEditor.getSession().getDocument().getValue(),
+            "new_starter_code": starterCodeEditor.getSession().getDocument().getValue(),
+        };
+        updateProblem(JSON.stringify(data), "application/json", $("#problem-details-save-progress"));
+    });
+
+    $("#solution-save-button").addEventListener("click", () => {
+        const data = {
+            "new_solution": solutionEditor.getSession().getDocument().getValue(),
+            "new_after_code": afterCodeEditor.getSession().getDocument().getValue()
+        };
+        updateProblem(JSON.stringify(data), "application/json", $("#solution-save-progress"));
+    });
+
+    $("#load-schema-button").addEventListener("click", () => {
+        const fileInput = document.createElement("input");
+        fileInput.setAttribute("type", "file");
+        fileInput.click();
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files[0]) {
+                const data = new FormData();
+                data.append("schema_file", fileInput.files[0]);
+                const progress = $("#schema-file-progress");
+                progress.classList.remove("error");
+                progress.classList.add("active");
+
+                ajax({
+                    "url": "{% url 'ajax_instructor_upload_schema' %}",
+                    "method": "POST",
+                    "body": data,
+                    "onSuccess": response => {
+                        const data = JSON.parse(response);
+                        checkSchemaStatus(data.new_schema.id);
+                    },
+                    "onError": () => {
+                        showErrorMessage("Error setting schema file");
+                        progress.classList.add("error");
+                    },
+                    "onTimeout": () => {
+                        showErrorMessage("Timeout setting schema file");
+                        progress.classList.add("error");
+                    }
+                });
+            }
+        });
+    });
+
+    function addTestCase(testCase, dataFiles) {
+        const tc = createElementWithClasses("div", "test-case");
+        tc.dataset.testCaseId = testCase.id;
+
+        const table = document.createElement("table");
+
+        const titleBox = createElementWithClasses("input", "title-box");
+        titleBox.setAttribute("type", "text");
+        titleBox.setAttribute("placeholder", "Enter title");
+        titleBox.value = testCase.title || "";
+
+        const pointsBox = createElementWithClasses("input", "points-box");
+        pointsBox.setAttribute("type", "number");
+        pointsBox.setAttribute("min", "0");
+        pointsBox.value = (testCase.points !== undefined) ? testCase.points : "1";
+
+        const descriptionBox = createElementWithClasses("input", "description-box");
+        descriptionBox.setAttribute("type", "text");
+        descriptionBox.setAttribute("placeholder", "Enter description");
+        descriptionBox.value = testCase.description || "";
+
+        let tr = document.createElement("tr");
+        let td = document.createElement("td");
+        td.appendChild(titleBox);
+        tr.appendChild(td);
+        td = document.createElement("td");
+        td.appendChild(pointsBox);
+        td.appendChild(document.createTextNode(" points"));
+        tr.appendChild(td);
+        table.appendChild(tr);
+
+        tr = document.createElement("tr");
+        td = document.createElement("td");
+        td.setAttribute("colspan", "2");
+        td.appendChild(descriptionBox);
+        tr.appendChild(td);
+        table.appendChild(tr);
+
+        tc.append(table);
+
+        const tableDataList = createElementWithClasses("div", "table-data-list", "indented");
+        tc.append(tableDataList);
+        addTableDataToTestCase(testCase, dataFiles, tableDataList);
+
+        const typeDiv = createElementWithClasses("div");
+        typeDiv.appendChild(document.createTextNode("Type:"));
+        const tableDataRadio = document.createElement("input");
+        tableDataRadio.setAttribute("type", "radio");
+        tableDataRadio.setAttribute("name", "type_" + testCase.id);
+        tableDataRadio.setAttribute("value", "D");
+        if (testCase.type === "D")
+            tableDataRadio.setAttribute("checked", "");
+        const tableDataLabel = document.createElement("label");
+        typeDiv.appendChild(tableDataLabel);
+        tableDataLabel.appendChild(tableDataRadio);
+        tableDataLabel.appendChild(document.createTextNode("Table data"));
+        const columnNamesRadio = document.createElement("input");
+        columnNamesRadio.setAttribute("type", "radio");
+        columnNamesRadio.setAttribute("name", "type_" + testCase.id);
+        columnNamesRadio.setAttribute("value", "N");
+        if (testCase.type === "N")
+            columnNamesRadio.setAttribute("checked", "");
+        const columnNamesLabel = document.createElement("label");
+        typeDiv.appendChild(columnNamesLabel);
+        columnNamesLabel.appendChild(columnNamesRadio);
+        columnNamesLabel.appendChild(document.createTextNode("Column names"));
+        tc.appendChild(typeDiv);
+
+        const saveDiv = createElementWithClasses("div", "right");
+        const progress = createElementWithClasses("div", "progress");
+        saveDiv.appendChild(progress);
+        const saveButton = createElementWithClasses("button", "save", "right");
+        saveButton.innerText = "Save";
+        saveDiv.appendChild(saveButton);
+        tc.appendChild(saveDiv);
+
+        const controlsDiv = createElementWithClasses("div", "controls");
+        const deleteButton = createElementWithClasses("button", "image");
+        const deleteImage = createElementWithClasses("img");
+        deleteImage.setAttribute("src", "{% static 'image/bomb.svg' %}");
+        deleteImage.setAttribute("title", "Delete test case");
+        deleteButton.appendChild(deleteImage);
+        controlsDiv.appendChild(deleteButton);
+        tc.appendChild(controlsDiv);
+
+        $("#test-case-list").appendChild(tc);
+
+        saveButton.addEventListener("click", () => {
+            const tableDataMapping = {};
+            for (let select of tc.querySelectorAll(".data-file-select"))
+                tableDataMapping[select.name] = select.value || null;
+            progress.classList.add("active");
+            progress.classList.remove("error");
+            ajax({
+                "url": "{% url 'ajax_instructor_update_test_case' problem_id=problem.id %}",
+                "method": "POST",
+                "body": JSON.stringify({
+                    "test_case_id": testCase.id,
+                    "new_title": titleBox.value,
+                    "new_description": descriptionBox.value,
+                    "new_points": pointsBox.value,
+                    "new_table_data_mapping": tableDataMapping,
+                    "new_type": columnNamesRadio.checked ? "N" : "D",
+                }),
+                "onError": () => {
+                    showErrorMessage("Error updating test case!");
+                    progress.classList.add("error");
+                },
+                "onTimeout": () => {
+                    showErrorMessage("Timeout updating test case");
+                    progress.classList.add("error");
+                },
+                "onComplete": () => progress.classList.remove("active")
+            });
+        });
+
+        deleteButton.addEventListener("click", () => {
+            ajax({
+                "url": "{% url 'ajax_instructor_delete_test_case' problem_id=problem.id %}",
+                "method": "POST",
+                "body": JSON.stringify({
+                    "test_case_id": testCase.id,
+                }),
+                "onError": () => {
+                    showErrorMessage("Error deleting test case!");
+                    progress.classList.add("error");
+                },
+                "onTimeout": () => {
+                    showErrorMessage("Timeout deleting test case");
+                    progress.classList.add("error");
+                },
+                "onComplete": () => progress.classList.remove("active"),
+                "onSuccess": () => tc.parentElement.removeChild(tc),
+            })
+        });
+
+        return tc;
+    }
+
+    function addDataFile(dataFile) {
+        const df = createElementWithClasses("li");
+        df.dataset.tableDataId = dataFile.id;
+
+        const filename = createElementWithClasses("span", "filename");
+        filename.innerHTML = "<a href='{% url 'instructor_download_table_data_dummy' %}" + dataFile.id + "?download'>" + dataFile.filename + "</a>";
+        df.appendChild(filename);
+
+        const deleteButton = createElementWithClasses("button", "delete");
+        deleteButton.innerText = "Delete";
+        df.appendChild(deleteButton);
+
+        $("#data-file-list").appendChild(df);
+
+        deleteButton.addEventListener("click", e => {
+            const parent = findAncestor(e.target, elem => elem.dataset && "tableDataId" in elem.dataset);
+            if (!parent)
+                showErrorMessage("Could not find ancestor with table data information for delete button");
+            deleteDataFile(parent);
+        });
+    }
+
+    function refreshTestCases() {
+        removeAllChildren($("#test-case-list"));
+
+        ajax({
+            "url": "{% url 'ajax_instructor_get_test_cases' problem_id=problem.id %}",
+            "method": "GET",
+            "onSuccess": data => {
+                const stuff = JSON.parse(data);
+                const testCases = stuff.test_cases;
+                const dataFiles = stuff.data_files;
+                testCases.forEach(testCase => addTestCase(testCase, dataFiles));
+            },
+            "onError": () => showErrorMessage("Error downloading test cases!"),
+            "onTimeout": () => showErrorMessage("Timeout while downloading test cases")
+        });
+    }
+
+    refreshTestCases();
+
+    ajax({
+        "url": "{% url 'ajax_instructor_get_data_files' problem_id=problem.id %}",
+        "method": "GET",
+        "onSuccess": data => {
+            const dataFiles = JSON.parse(data).data_files;
+            dataFiles.forEach(addDataFile);
+        },
+        "onError": () => showErrorMessage("Error downloading data files!"),
+        "onTimeout": () => showErrorMessage("Timeout while downloading data files")
+    });
+
+    $("#add-test-case").addEventListener("click", () => {
+        ajax({
+            "url": "{% url 'ajax_instructor_add_test_case' problem_id=problem.id %}",
+            "method": "POST",
+            "onSuccess": data => {
+                const result = JSON.parse(data);
+                addTestCase(result.new_test_case, result.data_files);
+            },
+            "onError": () => showErrorMessage("Error adding new test case!"),
+            "onTimeout": () => showErrorMessage("Timeout while adding test case")
+        });
+    });
+
+    $("#add-data-file").addEventListener("click", () => {
+        chooseFile(file => {
+            const data = new FormData();
+            data.append("data_file", file);
+            const progress = $("#data-file-progress");
+            progress.classList.add("active");
+            progress.classList.remove("error");
+            ajax({
+                "url": "{% url 'ajax_instructor_upload_data_file' problem_id=problem.id %}",
+                "method": "POST",
+                "body": data,
+                "onSuccess": response => {
+                    addDataFile(JSON.parse(response).new_data_file);
+                },
+                "onError": () => {
+                    progress.classList.add("error");
+                    showErrorMessage("Error uploading data file");
+                },
+                "onTimeout": () => {
+                    progress.classList.add("error");
+                    showErrorMessage("Timeout while uploading data file");
+                },
+                "onComplete": () => progress.classList.remove("active")
+            });
+        });
+    })
+
+    function checkSchemaStatus(schema_id) {
+        ajax({
+            "url": "{% url 'ajax_instructor_check_schema_status' %}",
+            "method": "POST",
+            "body": JSON.stringify({ "schema_id": schema_id }),
+            "contentType": "application/json",
+            "onSuccess": response => {
+                response = JSON.parse(response);
+                if (response.status === "Valid") {
+                    $("#schema-filename").innerHTML = "<a href='{% url "instructor_download_schema" problem_id=problem.id %}?download'>" + response.filename + "</a>";
+                    $("#schema-table-names").innerText = "(" + response.table_names.join(", ") + ")";
+                    updateProblem(JSON.stringify({ 'new_schema_id': schema_id }), "application/json", $("#schema-file-progress"), refreshTestCases);
+                } else if (response.status === "Invalid") {
+                    $("#schema-error").innerText = "Invalid schema file!";
+                    if (response.error_text)
+                        $("#schema-error").innerText += "\n" + response.error_text;
+                }
+
+                if (response.status === "Processing")
+                    window.setTimeout(() => checkSchemaStatus(schema_id), 500);
+                else
+                    $("#schema-file-progress").classList.remove("active");
+            },
+            "onError": () => showErrorMessage("Error checking schema status"),
+            "onTimeout": () => {
+                showErrorMessage("Timeout checking schema status; trying again");
+                window.setTimeout(checkSchemaStatus, 500);
+            }
+        });
+    }
+
+    function deleteDataFile(dataFileElement) {
+        const dataFileId = dataFileElement.dataset.tableDataId;
+        ajax({
+            "url": "{% url 'ajax_instructor_remove_data_file' problem_id=problem.id %}",
+            "method": "POST",
+            "contentType": "application/json",
+            "body": JSON.stringify({ 'data_file_id': dataFileId }),
+            "onSuccess": () => dataFileElement.parentNode.removeChild(dataFileElement),
+            "onError": () => showErrorMessage("Error deleting data file!"),
+            "onTimeout": () => showErrorMessage("Timeout deleting data file")
+        });
+    }
+
+    function addTableDataToTestCase(testCase, dataFiles, container) {
+        const mapping = testCase["table_data_mapping"];
+        for (let tableName of Object.keys(mapping)) {
+            const tableData = mapping[tableName];
+            const div = createElementWithClasses("div", "table-data");
+            const tableNameDiv = createElementWithClasses("span", "table-name");
+            tableNameDiv.innerText = tableName;
+            const dataFile = createElementWithClasses("span", "data-file")
+
+            const select = createElementWithClasses("select", "data-file-select");
+            select.setAttribute("name", tableName);
+            let option = document.createElement("option");
+            option.innerText = "";
+            select.appendChild(option);
+            for (let dataFile of dataFiles) {
+                option = document.createElement("option");
+                option.value = dataFile.id;
+                option.innerText = dataFile.filename;
+
+                if (tableData && tableData.id === dataFile.id)
+                    option.setAttribute("selected", "");
+
+                select.appendChild(option);
+            }
+            dataFile.appendChild(select);
+
+            div.appendChild(tableNameDiv);
+            div.appendChild(dataFile);
+            container.appendChild(div);
+        }
+    }
+
+    $("#validate-problem").addEventListener("click", () => {
+        ajax({
+            "url": "{% url 'ajax_instructor_validate_problem' problem_id=problem.id %}",
+            "method": "POST",
+            "onSuccess": response => {
+                const data = JSON.parse(response);
+                if (data.errors)
+                    showErrors(data.errors);
+            },
+            "onError": () => showErrorMessage("Error requesting validation of problem!"),
+            "onTimeout": () => showErrorMessage("Timeout requesting validation of problem")
+        });
+    });
+
+    $("#view-markdown-button").addEventListener("click", () => {
+        const progress = $("#view-markdown-progress");
+        progress.classList.remove("error");
+        progress.classList.add("active");
+
+        ajax({
+            "url": "{% url 'ajax_instructor_view_markdown' problem_id=problem.id %}",
+            "method": "POST",
+            "contentType": "application/json",
+            "body": JSON.stringify({ "markdown": promptEditor.getSession().getDocument().getValue() }),
+            "onSuccess": responseText => {
+                const response = JSON.parse(responseText);
+                if (response.html) {
+                    const display = document.createElement("div");
+                    display.innerHTML = response.html;
+                    showModal(display, { "title": "Preview" });
+                }
+
+                if (response.errors)
+                    showErrors(response.errors);
+            },
+            "onComplete": () => progress.classList.remove("active")
+        })
+    });
+})();
+
+    function showErrors(errors, title) {
+        title = title || "Error";
+        if (errors.length > 1) {
+            const ul = createElementWithClasses("ul", "errors");
+            for (const error of errors) {
+                const li = document.createElement("li");
+                li.innerText = error;
+                ul.appendChild(li);
+            }
+
+            showModal(ul, { "title": title });
+        } else if (errors.length === 1) {
+            const p = createElementWithClasses("p", "errors");
+            p.innerText = errors[0];
+            showModal(p, { "title": title });
+        }
+    }
+
+    function showErrorMessage(text) {
+        showModalMessage(text, { "title": "Error" });
+    }
+    </script>
+
+{% endblock %}

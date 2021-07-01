@@ -1,0 +1,26 @@
+"""
+Django settings lab app.
+"""
+
+from pathlib import Path
+import os
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent
+
+UPLOAD_DIR = BASE_DIR / 'upload'
+MEDIA_ROOT = UPLOAD_DIR
+UPLOAD_SCHEMA_DIR = 'schema'
+UPLOAD_TABLE_DATA_DIR = 'table_data'
+UPLOAD_CORRECT_RESULT_DIR = 'correct'
+UPLOAD_ATTEMPT_RESULT_DIR = 'attempt'
+
+import lab_db_settings
+LAB_DB_HOST = lab_db_settings.HOST
+LAB_DB_PORT = lab_db_settings.PORT
+LAB_DB_USER = lab_db_settings.USER
+LAB_DB_PASSWORD = lab_db_settings.PASSWORD
+
+MYSQL_EXECUTABLE = '/usr/bin/mysql'
+LAB_MAX_QUERY_ROWS = 500
+

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    {% if next_page %}
+        <meta http-equiv="Refresh" content="5; {{ next_page }}">
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="cards">
+        <div class="card no-title">
+            <p>You have been logged out.</p>
+            {% if next_page %}
+                <p>You will be redirected shortly.</p>
+            {% endif %}
+            <p><a href="{% url 'login' %}">Login again</a></p>
+        </div>
+    </div>
+{% endblock %}

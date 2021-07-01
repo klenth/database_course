@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+    <div class="cards">
+        <div class="top card">
+            <div class="title">Instructor home</div>
+            <p><a href="{% url 'instructor_new_course' %}">New course</a></p>
+        </div>
+        {% for course in instructor.courses.all %}
+            <div class="card">
+                <div class="title">{{ course.title }}</div>
+                <p><a href="{% url 'instructor_edit_course' course_id=course.id %}">Edit course</a></p>
+
+                {% with enabled_labs=course.labs.all|enabledonly disabled_labs=course.labs.all|disabledonly %}
+                    <div class="course labs">
+                        {% for lab in course.labs.all|enabledonly %}
+                            <a href="{% url 'instructor_view_lab' lab_id=lab.id %}" class="not-shown hand-cursor"><div class="lab">
+                                <div class="title">{{ lab.title }}</div>
+                                {% with enabled_problems=lab.enabled_problem_count disabled_problems=lab.disabled_problem_count %}
+                                    <div class="enabled-problem-count">{{ enabled_problems }} problem{{ enabled_problems|pluralize }}</div>
+                                    {% if disabled_problems %}
+                                        <div class="disabled-problem-count">({{ disabled_problems }} disabled)</div>
+                                    {% endif %}
+                                {% endwith %}
+
+                                <div class="points">{{ lab.total_points }} point{{ lab.total_points|pluralize }}</div>
+                                <div class="controls inline-blocks">
+                                    <form action="{% url 'instructor_disable_lab' lab_id=lab.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button class="image"><img src="{% static 'image/star-solid.svg' %}" alt="Disable lab" title="Disable lab so that it no longer appears for students"></button>
+                                    </form>
+                                    <form action="{% url 'instructor_duplicate_lab' lab_id=lab.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button class="image"><img src="{% static 'image/duplicate.svg' %}" alt="Duplicate lab" title="Duplicate lab"></button>
+                                    </form>
+                                    <div class="spacer"></div>
+                                    <form action="{% url 'instructor_delete_lab' lab_id=lab.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button class="image delete-button"><img src="{% static 'image/bomb.svg' %}" alt="Delete lab" title="Delete lab"></button>
+                                    </form>
+                                </div>
+                            </div></a>
+                        {% endfor %}
+                    </div>
+
+                    {% if disabled_labs %}
+                        {% if enabled_labs %}
+                            <hr>
+                        {% endif %}
+                        <div class="section-header">Disabled labs</div>
+                        <div class="course labs">
+                            {% for lab in course.labs.all|disabledonly %}
+                                <a href="{% url 'instructor_view_lab' lab_id=lab.id %}" class="not-shown hand-cursor"><div class="lab">
+                                    <div class="title">{{ lab.title }}</div>
+
+                                    {% with enabled_problems=lab.enabled_problem_count disabled_problems=lab.disabled_problem_count %}
+                                        <div class="enabled-problem-count">{{ enabled_problems }} problem{{ enabled_problems|pluralize }}</div>
+                                        {% if disabled_problems %}
+                                            <div class="disabled-problem-count">({{ disabled_problems }} disabled)</div>
+                                        {% endif %}
+                                    {% endwith %}
+
+                                    <div class="points">{{ lab.total_points }} point{{ lab.total_points|pluralize }}</div>
+                                    <div class="controls inline-blocks">
+                                        <form action="{% url 'instructor_enable_lab' lab_id=lab.id %}" method="post">
+                                            {% csrf_token %}
+                                            <button class="image"><img src="{% static 'image/star-open.svg' %}" alt="Enable lab" title="Enable lab so that it appears in the list of problems for students"></button>
+                                        </form>
+                                        <form action="{% url 'instructor_duplicate_lab' lab_id=lab.id %}" method="post">
+                                            {% csrf_token %}
+                                            <button class="image"><img src="{% static 'image/duplicate.svg' %}" alt="Duplicate lab" title="Duplicate lab"></button>
+                                        </form>
+                                        <div class="spacer"></div>
+                                        <form action="{% url 'instructor_delete_lab' lab_id=lab.id %}" method="post">
+                                            {% csrf_token %}
+                                            <button class="image delete-button"><img src="{% static 'image/bomb.svg' %}" alt="Delete lab" title="Delete lab"></button>
+                                        </form>
+                                    </div>
+                                </div></a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <script src="{% static 'script/base.js' %}"></script>
+    <script>
+"use strict";
+
+(function() {
+    document.querySelectorAll(".delete-button").forEach(button => button.addEventListener("click", e => {
+        e.preventDefault();
+        showModalMessage("Delete this lab?", {
+        "buttons": [
+            {
+                "text": "Delete",
+                "action": () => {
+                    const form = findAncestor(e.target, e => e.tagName.toLowerCase() === "form");
+                    if (form)
+                        form.submit();
+                    else
+                        console.error("No form ancestor found!");
+                }
+            },
+            {
+                "text": "Cancel",
+            }
+        ]
+        });
+    }));
+})();
+    </script>
+{% endblock %}

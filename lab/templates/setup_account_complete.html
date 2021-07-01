@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="cards">
+        <div class="card">
+            <div class="title">Account setup</div>
+
+            <p>
+                Your account is now active! Please <a href="{% url 'login' %}">login</a> to continue.
+            </p>
+        </div>
+    </div>
+{% endblock %}

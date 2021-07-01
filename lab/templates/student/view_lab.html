@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% load custom_tags %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        {{ lab.course.title }}
+    </span>
+    <span class="breadcrumb">
+        {{ lab.title }}
+    </span>
+{% endblock %}
+
+{% block alter_ego %}
+    {% if alter_ego %}
+        Acting as a student. <a href="{% url 'instructor_view_lab' lab_id=lab.id %}">Return to instructor view</a>
+    {% endif %}
+{% endblock %}
+
+
+{% block content %}
+    <div class="cards">
+        <div class="card">
+            <div class="title">{{ lab.title }}</div>
+
+            <div class="lab problems">
+                {% for problem in lab.enabled_problems %}
+                    <a href="{% url 'student_view_problem' problem_id=problem.id %}" class="not-shown hand-cursor"><div class="problem">
+                        <div class="title">
+                            {{ problem.title }}
+                        </div>
+                        <div class="prompt">
+                            {{ problem.prompt|markdown }}
+                        </div>
+                        <div class="points">
+                            <span style="font-size: 1.1rem;">{{ student|scoreonproblem:problem|floatformat }}</span>/{{ problem.possible_points|floatformat }} point{{ problem.possible_points|pluralize }}
+                        </div>
+                    </div></a>
+                {% endfor %}
+            </div>
+
+            <div class="lab total-score">
+                Current score: <span style="font-size: 125%; padding-left: 16px;">{{ student|scoreonlab:lab|floatformat }}</span> / {{ lab.total_points|floatformat }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Instructor home</a>
+    </span>
+    <span class="breadcrumb">
+        {{ course.title }}
+    </span>
+    <span class="breadcrumb">
+        {% if course %}
+            Edit {{ lab.title }}
+        {% else %}
+            New lab
+        {% endif %}
+    </span>
+{% endblock %}
+
+{% block content %}
+        <div class="cards">
+        <div class="card edit-lab">
+            <div class="title">
+                {% if course %}
+                    Edit lab {{ lab.title }}
+                {% else %}
+                    New lab
+                {% endif %}
+            </div>
+
+            <ul class="errorlist">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+
+            {% if lab %}
+                <form action="{% url 'instructor_edit_lab' course_id=course.id lab_id=lab.id %}" method="post">
+            {% else %}
+                <form action="{% url 'instructor_new_lab' course_id=course.id %}" method="post">
+            {% endif %}
+            {% csrf_token %}
+            <table>
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="title-box">Lab title</label></th>
+                        <td><input type="text" name="title" id="title-box" autofocus required
+                                    {% if lab %}
+                                        value="{{ lab_title|default:lab.title }}"
+                                    {% else %}
+                                        value="{{ lab_title|default:'' }}" placeholder="Enter title..."
+                                    {% endif %}
+                        ></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><button>Submit</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            </form>
+{% endblock %}

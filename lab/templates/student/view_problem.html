@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% load custom_tags %}
+{% load static %}
+{% load tz %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        {{ problem.lab.course.title }}
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_view_lab' lab_id=problem.lab.id %}">{{ problem.lab.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        {{ problem.title }}
+    </span>
+{% endblock %}
+
+{% block alter_ego %}
+    {% if alter_ego %}
+        Acting as a student. <a href="{% url 'instructor_view_problem' problem_id=problem.id %}">Return to instructor view</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="cards">
+        <div class="card">
+            <div class="title">{{ problem.title }}</div>
+            <div class="current-score">Current score:
+                {% if attempts %}
+                    <span style="font-size: 125%; padding-left: 8px;">{{ current_score|floatformat }}</span>
+                    / <span>{{ problem.possible_points|floatformat }}</span>
+                    {% if current_score == problem.possible_points %}
+                        <span class="complete-mark" title="You have full points on this problem. Any further submissions you make will not affect your grade."></span>
+                    {% endif %}
+                {% else %}
+                    not attempted
+                {% endif %}
+            </div>
+            {% if attempts %}
+                <div class="indented">
+                    <input type="checkbox" id="display-previous-attempts" class="display-toggle">
+                    <label for="display-previous-attempts">Previous attempts</label>
+                    <ul class="attempts-list display-toggleable no-marker">
+                        {% for attempt in attempts reversed %}
+                            <li>
+                                <span class="score">
+                                    {{ attempt.score }} / <span style="font-size: 80%;">{{ problem.possible_points }}</span>
+                                </span>
+                                {% if attempt != selected_attempt %}
+                                    <a href="{% url 'student_view_problem_attempt' problem_id=problem.id attempt_id=attempt.id %}">{{ attempt.when|friendlytime }}</a>
+                                {% else %}
+                                    {{ attempt.when|friendlytime }}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="problem-prompt">
+                {{ problem.prompt|markdown }}
+            </div>
+
+            <div class="problem-work-area">
+                <form id="submission-form" action="{% url 'student_view_problem' problem_id=problem.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="problem-text" name="text">
+                    {% comment %}<textarea class="code-entry" name="text">{{ recent_attempt_text }}</textarea>{% endcomment %}
+                    <div id="editor" class="code-editor">{{ recent_attempt_text }}</div>
+                </form>
+                <p class="right"><button id="submit-button">Submit</button></p>
+            </div>
+        </div>
+
+        {% if selected_attempt %}
+            <div class="card">
+                <div class="title">Results</div>
+                {% for result in selected_attempt.results.all %}
+                    {% with student_data=result.data_file|loadcsv correct_data=result.correct_result_data_file|loadcsv %}
+                        <div class="test-case-result">
+                            <div class="test-case-score"><span class="points">{{ result.score|floatformat }}</span> / {{ result.test_case.points|floatformat }}</div>
+                            <input type="checkbox" id="display-data-{{ result.id }}" class="display-toggle"
+                                {% if result.score < result.test_case.points %}checked{% endif %}>
+                            <label for="display-data-{{ result.id }}">
+                                <div class="test-case-title">{{ result.test_case.title }}</div>
+                            </label>
+                            <div class="display-toggleable"><div class="test-case-data">
+                                <div class="correct data">
+                                    <div class="caption">Expected</div>
+                                    <table>
+                                        {{ correct_data|datatable }}
+                                    </table>
+                                </div>
+                                <div class="student data">
+                                    <div class="caption">Your result</div>
+                                    <table>
+                                        {{ student_data|datatable:correct_data }}
+                                    </table>
+                                </div>
+                            </div></div>
+                        </div>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="{% static 'script/ace/ace.js' %}"></script>
+    <script src="{% static 'script/base.js' %}"></script>
+    <script>
+"use strict";
+(function() {
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/sql_lab");
+    editor.session.setMode("ace/mode/sql");
+
+    $("#submit-button").addEventListener("click", () => {
+        const text = editor.getSession().getDocument().getValue();
+        $("#problem-text").value = text;
+        $("#submission-form").submit();
+    });
+})();
+    </script>
+{% endblock %}
