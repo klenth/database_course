@@ -3,7 +3,7 @@ import string
 from django.core.files import storage
 
 from . import models, errors
-from sql_lab import settings
+from lab import settings
 
 from threading import Thread
 import mysql.connector
@@ -103,7 +103,6 @@ class QueryResults:
 
 def path_for_uploaded_file(filename):
     from django.core.files import storage
-    from sql_lab import settings
     store = storage.DefaultStorage()
     return str(settings.MEDIA_ROOT / store.path(filename))
 
