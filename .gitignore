@@ -3,4 +3,4 @@ __pycache__/
 /**/settings.py
 /lab/lab_db_settings.py
 /key.secret
-
+/log
