@@ -1,0 +1,214 @@
+body {
+    --night: #211551;
+    --night-light: #4c30ba;
+    --night-dark: #1a1041;
+    --copper: #9D581F;
+    --snow: #FFFFFF;
+    --flint: #101820;
+    --birch: #F1F1DE;
+    --thistle: #8252C7;
+    --sky: #00B5E2;
+    --basic-font-size: 12pt;
+    font-family: 'Lato', sans-serif;
+    font-size: var(--basic-font-size);
+}
+
+.database-name {
+    font-family: monospace;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.error {
+    color: red;
+}
+
+header {
+    font-size: 80%;
+    position: relative;
+    text-align: right;
+    border-bottom: 3px groove var(--copper);
+    padding-bottom: 1ex;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--night);
+    font-family: 'Merriweather', serif;
+}
+
+.indented {
+    margin-left: 1in;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th[scope="row"] {
+    color: var(--night);
+    text-align: right;
+    padding-right: 1ex;
+}
+
+th[scope="col"] {
+    color: var(--night);
+    border-bottom: 1px solid var(--copper);
+}
+
+td, th {
+    padding-left: 1ex;
+    padding-top: 5px;
+}
+
+table#databases {
+    width: 100%;
+    text-align: left;
+}
+
+table#databases tr > :nth-child(1) {
+    width: 20%;
+}
+
+table#databases tr > :nth-child(2) {
+    width: 20%;
+}
+
+table#databases tr > :nth-child(3) {
+    width: 30%;
+}
+
+table#databases tr > :nth-child(4) {
+    width: 30%;
+}
+
+table#other-databases {
+    width: 100%;
+    text-align: left;
+}
+
+table#other-databases tr > :nth-child(1) {
+    width: 20%;
+}
+
+table#other-databases tr > :nth-child(2) {
+    width: 20%;
+}
+
+table#other-databases tr > :nth-child(3) {
+    width: 20%;
+}
+
+table#other-databases tr > :nth-child(4) {
+    width: 10%;
+}
+
+table#other-databases tr > :nth-child(5) {
+    width: 30%;
+}
+
+table#databases .deleted, table#other-databases .deleted {
+    color: #402020;
+    font-style: italic;
+}
+
+table#exports td, table#exports th {
+    padding-left: 2ex;
+    padding-right: 2ex;
+}
+
+ul:not(.no-marker) {
+    list-style-type: none;
+    --bullet-width: 1.5ex;
+}
+
+ul:not(.no-marker) > li {
+    position: relative;
+    padding-left: var(--bullet-width);
+    padding-bottom: 0.5ex;
+}
+
+ul:not(.no-marker) > li::before {
+    position: absolute;
+    width: 0;
+    top: -0.3ex;
+    text-align: right;
+    left: calc(-1 * var(--bullet-width));
+    content: '\2767';
+    color: var(--copper);
+    font-size: 150%;
+}
+
+ul.no-marker {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+input[type="radio"].buttony {
+    display: none;
+}
+
+input[type="radio"].buttony + label {
+    border: 2px solid #00000000;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 3px;
+
+}
+
+input[type="radio"].buttony:checked + label {
+    border: 2px solid var(--sky);
+}
+
+.delete-button {
+    display: inline-block;
+    box-shadow: 0 0 1px 1px darkred;
+}
+
+.click-me-button {
+    display: inline-block;
+    box-shadow: 0 0 3px 3px var(--thistle);
+}
+
+.top {
+    vertical-align: top;
+}
+
+.gap-below {
+    padding-bottom: 2ex;
+}
+
+tr.gap-below > * {
+    padding-bottom: 2ex;
+}
+
+#tokens .username, #tokens .password {
+    font-family: monospace;
+    font-size: 90%;
+}
+
+button.slim {
+    padding: 0;
+    /*border: 2px outset var(--night);
+    border-radius: 4px;
+    font-size: 80%;
+    color: var(--night)*/
+}
+
+/*
+button.slim:active {
+    border: 2px inset var(--night);
+}
+*/
+input.copybox {
+    border: none;
+}
+
+.justify {
+    text-align: justify;
+}
