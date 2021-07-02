@@ -26,7 +26,7 @@ class ProblemSchema(models.Model):
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid1)
-    file = models.FileField(upload_to=f'{lab.settings.UPLOAD_SCHEMA_DIR}/%Y/%m/%d/', null=True, default=None)
+    file = models.FileField(upload_to=f'{lab.settings.UPLOAD_SCHEMA_DIR.relative_to(lab.settings.PROJECT_DIR)}/%Y/%m/%d/', null=True, default=None)
     filename = models.CharField(max_length=100, null=True, default=None)
     status = models.CharField(max_length=1, choices=SCHEMA_STATUS_CHOICES, null=False, blank=False, default=SCHEMA_MISSING)
     table_names = models.CharField(max_length=200, null=False, blank=True, default='')  # Comma-separated list
@@ -204,7 +204,7 @@ class Problem(models.Model):
 class ProblemTableData(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid1)
     problem = models.ForeignKey(to=Problem, on_delete=models.CASCADE, related_name='table_data')
-    data_file = models.FileField(upload_to=f'{lab.settings.UPLOAD_TABLE_DATA_DIR}/%Y/%m/%d/', null=False)
+    data_file = models.FileField(upload_to=f'{lab.settings.UPLOAD_TABLE_DATA_DIR.relative_to(lab.settings.PROJECT_DIR)}/%Y/%m/%d/', null=False)
     data_filename = models.CharField(max_length=100, null=False, blank=False)
 
     class Meta:
@@ -231,7 +231,7 @@ class ProblemTestCase(models.Model):
     description = models.CharField(max_length=100, null=False, blank=True, default='')
     points = models.PositiveSmallIntegerField(null=False, default=1)
     number = models.PositiveSmallIntegerField(null=False, default=0)
-    result_data_file = models.FileField(upload_to=f'{lab.settings.UPLOAD_CORRECT_RESULT_DIR}/%Y/%m/%d/', null=True, default=None)
+    result_data_file = models.FileField(upload_to=f'{lab.settings.UPLOAD_CORRECT_RESULT_DIR.relative_to(lab.settings.PROJECT_DIR)}/%Y/%m/%d/', null=True, default=None)
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=TEST_CASE_TYPE_TABLE_DATA, null=False, blank=False)
 
     class Meta:
@@ -361,7 +361,7 @@ class ProblemAttempt(models.Model):
 class AttemptResults(models.Model):
     attempt = models.ForeignKey(to=ProblemAttempt, on_delete=models.CASCADE, related_name='results')
     test_case = models.ForeignKey(to=ProblemTestCase, on_delete=models.RESTRICT, related_name='+')
-    data_file = models.FileField(upload_to=f'{lab.settings.UPLOAD_ATTEMPT_RESULT_DIR}/%Y/%m/%d/', null=False)
+    data_file = models.FileField(upload_to=f'{lab.settings.UPLOAD_ATTEMPT_RESULT_DIR.relative_to(lab.settings.PROJECT_DIR)}/%Y/%m/%d/', null=False)
     score = models.PositiveSmallIntegerField()
 
     class Meta:
