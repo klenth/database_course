@@ -155,7 +155,8 @@ def student_home(request):
                 if StudentDatabase.objects.filter(name=db_name).exists():
                     context['new_db_errors'].append('Database {} already exists.'.format(db_name))
                 elif StudentDatabase.is_valid_name(db_name):
-                    context['new_db'] = student.create_database(db_name)
+                    # context['new_db'] = student.create_database(db_name)
+                    context['new_db'] = StudentDatabase.create(student, db_name)
                     return redirect('student_home')
                 else:
                     context['new_db_errors'].append("Invalid database name: {} (database names can be up to {} characters long and may be composed of only letters, digits, and underscores)".format(db_name, StudentDatabase.MAX_NAME_LENGTH))

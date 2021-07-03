@@ -80,23 +80,6 @@ def get_db():
 #
 #         return super().set_password(raw_password)
 #
-#     def create_database(self, db_name):
-#         db_query = StudentDatabase.objects.filter(name=db_name)
-#         db = db_query.get() if db_query.exists() else None
-#         if db and db.owner == self:
-#             return None
-#         elif db:
-#             raise ValueError("DB already exists and is owned by someone else")
-#         else:
-#             with get_db() as db:
-#                 cursor = db.cursor()
-#                 cursor.execute("""CREATE DATABASE IF NOT EXISTS {}""".format(db_name))
-#                 cursor.execute("""GRANT ALL ON {}.* TO %s@'%' IDENTIFIED BY %s""".format(db_name),
-#                                (self.username, self.password_clear))
-#             db = StudentDatabase(name=db_name,
-#                                  owner=self)
-#             db.save()
-#             return db
 
 
 class DatabaseDeletedError(Exception):
@@ -115,6 +98,25 @@ class StudentDatabase(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._saved_table_names = None
+
+    @staticmethod
+    def create(student, db_name):
+        db_query = StudentDatabase.objects.filter(name=db_name)
+        db = db_query.get() if db_query.exists() else None
+        if db and db.owner == student:
+            return None
+        elif db:
+            raise ValueError("DB already exists and is owned by someone else")
+        else:
+            with get_db() as db:
+                cursor = db.cursor()
+                cursor.execute("""CREATE DATABASE IF NOT EXISTS {}""".format(db_name))
+                cursor.execute(f"""GRANT ALL ON {db_name}.* TO %s@'localhost'""",
+                               (student.username,))
+            db = StudentDatabase(name=db_name,
+                                 owner=student)
+            db.save()
+            return db
 
     @staticmethod
     def is_valid_name(db_name):
@@ -177,16 +179,16 @@ class StudentDatabase(models.Model):
                 with get_db() as db:
                     cursor = db.cursor()
                     if write_permission:
-                        cursor.execute("""GRANT ALL ON {}.* TO %s@'%'""".format(self.name),
+                        cursor.execute("""GRANT ALL ON {}.* TO %s@'localhost'""".format(self.name),
                                        (student.username,))
                     else:
                         try:
-                            cursor.execute("""REVOKE ALL ON {}.* FROM %s@'%'""".format(self.name),
+                            cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
                                            (student.username,))
                         except mysql.errors.ProgrammingError as e:
                             if e.errno != errorcode.ER_NONEXISTING_GRANT:
                                 raise e
-                        cursor.execute("GRANT SELECT ON {}.* TO %s@'%'".format(self.name),
+                        cursor.execute("GRANT SELECT ON {}.* TO %s@'localhost'".format(self.name),
                                        (student.username,))
 
                 sdba.save()
@@ -194,7 +196,7 @@ class StudentDatabase(models.Model):
             sdba = StudentDatabaseAccess(database=self, student=student, write_permission=write_permission)
             with get_db() as db:
                 cursor = db.cursor()
-                cursor.execute("GRANT {} on {}.* TO %s@'%'".format("ALL" if write_permission else "SELECT", self.name),
+                cursor.execute("GRANT {} on {}.* TO %s@'localhost'".format("ALL" if write_permission else "SELECT", self.name),
                                (student.username,))
 
             sdba.save()
@@ -205,7 +207,7 @@ class StudentDatabase(models.Model):
             with get_db() as db:
                 cursor = db.cursor()
                 try:
-                    cursor.execute("""REVOKE ALL ON {}.* FROM %s@'%'""".format(self.name),
+                    cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
                                    (student.username,))
                 except mysql.errors.ProgrammingError as e:
                     if e.errno != errorcode.ER_NONEXISTING_GRANT:
@@ -527,7 +529,7 @@ class ClassDatabase(models.Model):
             cursor.execute("""CREATE DATABASE IF NOT EXISTS `{}`""".format(name))
 
             for superuser in auth_models.User.objects.filter(is_superuser=True):
-                cursor.execute("""GRANT ALL ON `{}`.* TO %s@'%'""".format(name),
+                cursor.execute("""GRANT ALL ON `{}`.* TO %s@'localhost'""".format(name),
                                (superuser.username,))
 
             cdb = ClassDatabase(name=name, published=published, **kwargs)
@@ -543,7 +545,7 @@ class ClassDatabase(models.Model):
         with get_db() as db:
             cursor = db.cursor()
             for student in Student.objects.all():
-                cursor.execute("""GRANT SELECT ON `{}`.* TO %s@'%'""".format(self.name),
+                cursor.execute("""GRANT SELECT ON `{}`.* TO %s@'localhost'""".format(self.name),
                                (student.username,))
         self.save()
 
@@ -552,7 +554,7 @@ class ClassDatabase(models.Model):
         with get_db() as db:
             cursor = db.cursor()
             for student in Student.objects.all():
-                cursor.execute("""REVOKE SELECT ON `{}`.* FROM %s@'%'""".format(self.name),
+                cursor.execute("""REVOKE SELECT ON `{}`.* FROM %s@'localhost'""".format(self.name),
                                (student.username,))
         self.save()
 
@@ -592,9 +594,9 @@ class AccessToken(models.Model):
         token = AccessToken(database=database, write_permission=write_permission, **kwargs)
         with get_db() as db:
             cursor = db.cursor()
-            cursor.execute('''CREATE USER %s@'%' IDENTIFIED BY %s''',
+            cursor.execute('''CREATE USER %s@'localhost' IDENTIFIED BY %s''',
                            (token.username, token.password))
-            cursor.execute('''GRANT {} ON `{}`.* TO %s@'%' '''.format(
+            cursor.execute('''GRANT {} ON `{}`.* TO %s@'localhost' '''.format(
                 'ALL' if write_permission else 'SELECT', database.name
             ), (token.username,))
         token.save()
@@ -606,12 +608,12 @@ class AccessToken(models.Model):
         with get_db() as db:
             cursor = db.cursor()
             if write_permission:
-                cursor.execute('''GRANT ALL ON `{}`.* TO %s@'%' '''.format(self.database.name),
+                cursor.execute('''GRANT ALL ON `{}`.* TO %s@'localhost' '''.format(self.database.name),
                                (self.username,))
             else:
-                cursor.execute('''REVOKE ALL ON `{}`.* FROM %s@'%' '''.format(self.database.name),
+                cursor.execute('''REVOKE ALL ON `{}`.* FROM %s@'localhost' '''.format(self.database.name),
                                (self.username,))
-                cursor.execute('''GRANT SELECT ON `{}`.* TO %s@'%' '''.format(self.database.name),
+                cursor.execute('''GRANT SELECT ON `{}`.* TO %s@'localhost' '''.format(self.database.name),
                                (self.username,))
         self.write_permission = write_permission
         self.save()
@@ -631,6 +633,6 @@ def _access_token_pre_delete(sender, instance, **kwargs):
 def _on_password_change(person, new_password):
     with get_db() as db:
         cursor = db.cursor()
-        cursor.execute('''CREATE USER IF NOT EXISTS %s@'%' ''', (person.username,))
-        cursor.execute('''ALTER USER %s@'%' IDENTIFIED BY %s''',
+        cursor.execute('''CREATE USER IF NOT EXISTS %s@'localhost' ''', (person.username,))
+        cursor.execute('''ALTER USER %s@'localhost' IDENTIFIED BY %s''',
                        (person.username, new_password,))
