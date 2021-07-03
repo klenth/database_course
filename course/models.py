@@ -8,6 +8,8 @@ class Person(auth_models.User):
     name = models.CharField(max_length=80, null=False, blank=False)
     sortable_name = models.CharField(max_length=80, null=False, blank=True)
 
+    password_change_listeners = []
+
     class Meta:
         verbose_name = 'Person'
         verbose_name_plural = 'People'
@@ -15,6 +17,12 @@ class Person(auth_models.User):
 
     def get_sortable_name(self):
         return self.sortable_name if self.sortable_name else self.name
+
+    def set_password(self, raw_password):
+        super().set_password(raw_password)
+        self.save()
+        for listener in Person.password_change_listeners:
+            listener(self, raw_password)
 
     def __str__(self):
         return self.name
@@ -30,6 +38,11 @@ class Person(auth_models.User):
             return 'Instructor', i.get()
 
         return None, None
+
+    @staticmethod
+    def password_change_listener(listener):
+        Person.password_change_listeners.append(listener)
+        return listener
 
 
 class Instructor(Person):

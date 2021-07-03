@@ -4,7 +4,7 @@ from django.db.models.signals import pre_delete, pre_save
 from django.dispatch.dispatcher import receiver
 from django.db.transaction import atomic
 from django.utils import timezone
-from course.models import Student, Course
+from course.models import Person, Student, Course
 import mysql.connector.errorcode as errorcode
 import mysql.connector as mysql
 import uuid
@@ -289,6 +289,7 @@ class StudentDatabase(models.Model):
     def create_token(self, write_permission=False):
         token = AccessToken.create_token(database=self, write_permission=write_permission)
         return token
+
 
 class StudentDatabaseAccess(models.Model):
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE, related_name='shared_databases')
@@ -624,3 +625,12 @@ def _access_token_pre_delete(sender, instance, **kwargs):
             cursor.execute('DROP USER %s', (instance.username,))
         except mysql.ProgrammingError as e:
             print(e)
+
+
+@Person.password_change_listener
+def _on_password_change(person, new_password):
+    with get_db() as db:
+        cursor = db.cursor()
+        cursor.execute('''CREATE USER IF NOT EXISTS %s@'%' ''', (person.username,))
+        cursor.execute('''ALTER USER %s@'%' IDENTIFIED BY %s''',
+                       (person.username, new_password,))
