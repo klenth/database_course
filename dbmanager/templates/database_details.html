@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% load functional %}
+
+{% block head %}
+    <style>
+        #share_table tr > :nth-child(2) {
+            text-align: center;
+            min-width: 4in;
+        }
+
+        select[size="1"] {
+            font-size: var(--basic-font-size);
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        button, input[type="button"] {
+            font-size: var(--basic-font-size);
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        #share_submit_button_container {
+            display: inline-block;
+            margin-top: 0.25in;
+            /*
+            border: 3px solid var(--night);
+            padding: 5px;
+            border-radius: 5px;
+            */
+        }
+
+        input.copybox {
+            border: none;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>Database <span class="database-name">{{ database.name }}</span></h1>
+    {% if is_shared %}
+        <h4>Owned by {{ database.owner.first_name }} {{ database.owner.last_name }}
+            {% if is_readonly %}
+                (read-only access)
+            {% else %}
+                (read/write access)
+            {% endif %}
+        </h4>
+    {% endif %}
+
+    <table>
+        <tr>
+            <th scope="row">Created</th>
+            <td>{{ database.created }}</td>
+        </tr>
+        {% if database.is_deleted %}
+        <tr>
+            <th scope="row"></th>
+            <td>This database has already been deleted from outside the web app. <br/>
+            You should probably go ahead and <a href="{% url 'delete_database' db_name=database.name %}">delete it here</a> too.</td>
+        </tr>
+        {% else %}
+        <tr>
+            <th scope="row">Tables</th>
+            <td>{{ database.get_table_names_safe|join:', '|default:'(none)' }}</td>
+        </tr>
+        {% endif %}
+        {% if not is_shared %}
+        <tr>
+            <th scope="row" class="top">Access tokens</th>
+            <td>
+                <ul class="tokens no-marker" style="margin-top: 0">
+                    {% for token in database.tokens.all %}
+                        <li><a href="{% url 'token_details' token_username=token.username %}" class="username">{{ token.username }}</a>
+                        {% if token.write_permission %}(can write){% endif %}</li>
+                    {% empty %}
+                        (none)
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th scope="row">Database actions</th>
+            <td>
+                {% if not database.is_deleted %}
+                <form action="{% url 'export_database' db_name=database.name %}" method="post" style="display: inline-block;">
+                    {% csrf_token %}
+                    <input type="submit" value="Make snapshot...">
+                </form>
+
+                <span style="display: inline-block; width: 2ex;"></span>
+                {% endif %}
+
+                {% if is_owner %}
+                    <form action="{% url 'create_token' db_name=database.name %}" method="post" style="display: inline-block;">
+                        {% csrf_token %}
+                        <input type="submit" value="Create access token">
+                    </form>
+                    <span style="display: inline-block; width: 2ex;"></span>
+                {% endif %}
+
+                {% if is_owner %}
+                    <form action="{% url 'delete_database' db_name=database.name %}" method="get" style="display: inline-block;">
+                        {% csrf_token %}
+                        <input type="submit" class="delete-button" value="Delete">
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+    {% if not is_owner %}
+        <tr>
+            <th scope="row">{% if is_shared %}Also shared with{% else %}Shared with{% endif %}</th>
+            {% comment %}
+            <td>{% for sdba in database.shared_with_students.all %}
+                    {% if sdba.student != student %}{{ sdba.student.get_full_name }}
+                        {% if sdba.write_permission %}(read/write){% else %}(read-only){% endif %}{% endif %}{% if not forloop.last %},{% endif %}
+                {% empty %}
+                    (none)
+                {% endfor %}</td>
+            {% endcomment %}
+            <td>{{ database.other_students.all|except:student|map:"get_full_name"|join:", " }}</td>
+        </tr>
+    {% endif %}
+    </table>
+
+    {% if is_owner %}
+        <div>
+            <h3>Shares</h3>
+            <form id="adjust_shares_form" action="{% url 'database_details' db_name=database.name %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_shares">
+                <table id="share_table">
+                    <tr>
+                        <th scope="col">Access</th>
+                        <th scope="col">Student</th>
+                        <th scope="col"></th>
+                    </tr>
+                    {% for sdba in database.shared_with_students.all %}
+                        <tr>
+                            <td>
+                                <input type="radio"
+                                       id="access_{{ forloop.counter0 }}_ro_box"
+                                       name="access_{{ forloop.counter0 }}"
+                                       value="ro"
+                                        {% if not sdba.write_permission %}checked{% endif %}
+                                       class="buttony">
+                                <label for="access_{{ forloop.counter0 }}_ro_box">read-only</label>
+                                &nbsp;
+                                <input type="radio"
+                                       id="access_{{ forloop.counter0 }}_rw_box"
+                                       name="access_{{ forloop.counter0 }}"
+                                       value="rw"
+                                        {% if sdba.write_permission %}checked{% endif %}
+                                       class="buttony">
+                                <label for="access_{{ forloop.counter0 }}_rw_box">read/write</label>
+                            </td>
+                            <td>
+                                {{ sdba.student.get_full_name }}
+                                <input type="hidden" name="access_{{ forloop.counter0 }}_student" value="{{ sdba.student.username }}">
+                            </td>
+                            <td>
+                                <input type="checkbox"
+                                       id="access_{{ forloop.counter0 }}_unshare_box"
+                                       name="access_{{ forloop.counter0 }}_unshare">
+                                <label for="access_{{ forloop.counter0 }}_unshare_box">Unshare</label>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    <tr id="new_access_row" {% if unshared_students.count == 0 %}style="display: none;"{% endif %}>
+                        <td>
+                            <input type="radio"
+                                   id="new_access_ro_box"
+                                   name="new_access_box"
+                                   value="ro"
+                                   checked
+                                   class="buttony">
+                            <label for="new_access_ro_box">read-only</label>
+                            &nbsp;
+                            <input type="radio"
+                                   id="new_access_rw_box"
+                                   name="new_access_box"
+                                   value="rw"
+                                   class="buttony">
+                            <label for="new_access_rw_box">read/write</label>
+                        </td>
+                        <td>
+                            <select id="new_access_student_box" size="1">
+                                {% for student in unshared_students %}
+                                    <option value="{{ student.username }}">{{ student.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button id="new_access_add_button" type="button">Add</button>
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>
+
+                <p>
+                    <span id="share_submit_button_container">
+                        <input id="share_submit_button" type="submit" value="Save changes to shares">
+                    </span>
+                </p>
+            </form>
+        </div>
+    {% endif %}
+
+    <p>
+        Back to <a href="{% url 'student_home' %}">my databases</a>
+    </p>
+
+    <script>
+    "use strict";
+
+    (function() {
+        let share_count = {{ database.shared_with_students.count }};
+
+        const STUDENTS = {
+            {% for student in unshared_students %}
+                "{{ student.username }}": '{{ student.get_full_name|safe }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+
+        function $(sel) {
+            return document.querySelector(sel);
+        }
+
+        function $$(sel) {
+            return document.querySelectorAll(sel);
+        }
+
+        $("#new_access_add_button").addEventListener("click", function() {
+            let write_permission = $("#new_access_rw_box").checked;
+            let username = $("#new_access_student_box").value;
+            if (username) {
+                let new_row = createStudentRow(username, write_permission);
+                let new_access_row = $("#new_access_row");
+                new_access_row.parentElement.insertBefore(new_row, new_access_row);
+                ++share_count;
+
+                removeStudentFromUnshared(username);
+                resetNewAccessRow();
+            }
+        });
+
+        function createStudentRow(username, write_permission) {
+            let tr = document.createElement("tr"),
+                access_td = document.createElement("td"),
+                student_td = document.createElement("td"),
+                unshare_td = document.createElement("td");
+
+            let id_stem = "access_" + share_count;
+            let ro_button = document.createElement("input");
+            ro_button.setAttribute("type", "radio");
+            ro_button.setAttribute("id", id_stem + "_ro_box");
+            ro_button.setAttribute("name", id_stem);
+            ro_button.setAttribute("value", "ro");
+            if (!write_permission)
+                ro_button.setAttribute("checked", "true");
+            ro_button.classList.add("buttony");
+
+            let ro_label = document.createElement("label");
+            ro_label.setAttribute("for", id_stem + "_ro_box");
+            ro_label.innerText = "read-only";
+
+            let rw_button = document.createElement("input");
+            rw_button.setAttribute("type", "radio");
+            rw_button.setAttribute("id", id_stem + "_rw_box");
+            rw_button.setAttribute("name", id_stem);
+            rw_button.setAttribute("value", "rw");
+            if (write_permission)
+                rw_button.setAttribute("checked", "true");
+            rw_button.classList.add("buttony");
+
+            let rw_label = document.createElement("label");
+            rw_label.setAttribute("for", id_stem + "_rw_box");
+            rw_label.innerText = "read/write";
+
+            access_td.appendChild(ro_button);
+            access_td.appendChild(ro_label);
+            access_td.appendChild(document.createTextNode("\n\u00a0\n"));
+            access_td.appendChild(rw_button);
+            access_td.appendChild(rw_label);
+
+            let full_name = STUDENTS[username];
+            let username_input = document.createElement("input");
+            username_input.setAttribute("type", "hidden");
+            username_input.setAttribute("name", id_stem + "_student");
+            username_input.setAttribute("value", username);
+
+            student_td.appendChild(document.createTextNode(full_name));
+            student_td.appendChild(username_input);
+
+            let unshare_box = document.createElement("input");
+            unshare_box.setAttribute("type", "checkbox");
+            unshare_box.setAttribute("id", id_stem + "_unshare_box");
+            unshare_box.setAttribute("name", id_stem + "_unshare");
+            let unshare_label = document.createElement("label");
+
+            unshare_label.setAttribute("for", id_stem + "_unshare_box");
+            unshare_label.innerText = " Unshare";
+
+            unshare_td.appendChild(unshare_box);
+            unshare_td.appendChild(unshare_label);
+
+            tr.appendChild(access_td);
+            tr.appendChild(student_td);
+            tr.appendChild(unshare_td);
+
+            return tr;
+        }
+
+        function removeStudentFromUnshared(username) {
+            let username_box = $("#new_access_student_box");
+            let child = username_box.firstElementChild;
+            while (child) {
+                if (child.tagName === "OPTION" && child.value === username) {
+                    username_box.removeChild(child);
+                    break;
+                }
+
+                child = child.nextElementSibling;
+            }
+
+            // If we've added everyone, hide the row
+            if (username_box.childElementCount === 0)
+                $("#new_access_row").style.display = "none";
+        }
+
+        function resetNewAccessRow() {
+            $("#new_access_ro_box").checked = true;
+        }
+
+        function popSaveSharesButton() {
+            let button = $("#share_submit_button");
+            button.removeAttribute("disabled");
+            button.classList.add("click-me-button");
+        }
+
+        $$("#adjust_shares_form input, #adjust_shares_form select").forEach(element => element.addEventListener("change", popSaveSharesButton));
+        $$("#adjust_shares_form button").forEach(element => element.addEventListener("click", popSaveSharesButton));
+    })();
+    </script>
+
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Profile for {{ student.username }}</h1>
+    {% if editable %}
+        <form id="edit_form" action="{% url 'view_profile' username=student.username %}" method="post">
+            {% csrf_token %}
+        {% if update_profile_errors %}
+            <ul class="error">
+                {% for error in update_profile_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if update_profile_message %}
+            <h4>{{ update_profile_message }}</h4>
+        {% endif %}
+    {% endif %}
+    <table>
+        <tr>
+            <th scope="row">First name</th>
+            <td>
+                {% if editable %}
+                    <input type="text" id="first_name_box" name="first_name" size="30" maxlength="30" value="{{ student.first_name }}">
+                {% else %}
+                    {{ student.first_name }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Last name</th>
+            <td>
+                {% if editable %}
+                    <input type="text" id="last_name_box" name="last_name" size="30" maxlength="30" value="{{ student.last_name }}">
+                {% else %}
+                    {{ student.last_name }}
+                {% endif %}
+            </td>
+        </tr>
+        {%  if editable %}
+            <tr>
+                <th scope="row">Password</th>
+                <td>
+                    <input type="password" id="password_box" name="password" size="30" maxlength="30"> &nbsp;&nbsp;&nbsp;
+                    Confirm: <input type="password" id="password2_box" size="30" maxlength="30">
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><button type="button" id="submit_button">Update profile</button></td>
+            </tr>
+        {% endif %}
+    </table>
+
+    {% if editable %}
+    </form>
+        <script>
+"use strict";
+(function() {
+    function $(sel) {
+        return document.querySelector(sel);
+    }
+
+    $("#submit_button").addEventListener("click", function() {
+        let pw1 = $("#password_box").value,
+            pw2 = $("#password2_box").value;
+        if (pw1 !== pw2) {
+            alert("Passwords do not match.");
+        }
+
+        else if (!$("#first_name_box").value.trim() || !$("#last_name_box").value.trim())
+            alert("First name and last name cannot be empty.");
+
+        else
+            $("#edit_form").submit();
+    });
+
+    function pw_match_checker() {
+        let pw_box_1 = $("#password_box"),
+            pw_box_2 = $("#password2_box");
+        let pw1 = pw_box_1.value,
+            pw2 = pw_box_2.value;
+        if (pw2 && pw1 !== pw2)
+            pw_box_2.setCustomValidity("Passwords do not match");
+        else
+            pw_box_2.setCustomValidity("");
+    }
+
+    $("#password_box").addEventListener("blur", pw_match_checker);
+    $("#password2_box").addEventListener("blur", pw_match_checker);
+})();
+        </script>
+    {% endif %}
+{% endblock %}

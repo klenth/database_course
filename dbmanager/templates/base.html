@@ -1,0 +1,37 @@
+{% load staticfiles %}
+{% load humanize %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>CMPT 307 Database Manager</title>
+        <link rel="stylesheet" href="{% static 'base.css' %}">
+        <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Merriweather:400,700&display=swap" rel="stylesheet">
+        {% block head %}{% endblock %}
+    </head>
+
+    <body>
+        <header>
+            {% block login %}
+                {% if user.is_authenticated %}
+                    Logged in as <a href="{% url 'student_home' %}">{{ user.username }}</a>
+                     |
+                    <a href="{% url 'view_profile' %}">Edit profile</a>
+                     |
+                    <a href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <form action="{% url 'login' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.url }}">
+                        <label for="username_box">Username:</label>
+                        <input type="text" name="username" id="username_box" size="20">
+                        <label for="password_box">Password:</label>
+                        <input type="password" name="password" id="password_box" size="20">
+                        <input type="submit" value="Login">
+                    </form>
+                {% endif %}
+            {% endblock %}
+        </header>
+        {% block content %}{% endblock %}
+    </body>
+</html>

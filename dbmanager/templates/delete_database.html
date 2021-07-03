@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Confirm database deletion</h1>
+
+    <p>Are you sure you wish to delete the <span class="database-name">{{ database.name }}</span> database?</p>
+    {% if database.is_deleted %}
+        <p>This database has already been deleted externally, meaning that all tables it used to contain are already gone. Deleting it here will only delete any record of
+        it in the web app.</p>
+    {% else %}
+        <p>This will irreversibly delete all tables it contains. (You may wish to make a snapshot first as a backup.)</p>
+        <h3>Tables</h3>
+        <ul>
+            {% for table_name in database.get_table_names %}
+                <li>{{ table_name }}</li>
+            {% empty %}
+                (none)
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h3>Shares</h3>
+    <ul>
+        {% for sdba in database.shared_with_students.all %}
+            <li>
+                {{ sdba.student.first_name }} {{ sdba.student.last_name }}
+                {% if sdba.write_permission %}
+                    (read/write)
+                {% else %}
+                    (read-only)
+                {% endif %}
+            </li>
+        {% empty %}
+            (none)
+        {% endfor %}
+    </ul>
+
+    <p>
+        <form action="{% url 'delete_database' db_name=database.name %}" method="post">
+            {% csrf_token %}
+            <input type="submit" class="delete-button" value="Yes, really delete">
+            &nbsp;
+            <input type="button" value="Never mind" id="never-mind-button">
+        </form>
+    </p>
+
+    <script>
+    "use strict";
+    document.querySelector("#never-mind-button").addEventListener("click", function() {
+        window.history.back();
+    });
+    </script>
+{% endblock %}

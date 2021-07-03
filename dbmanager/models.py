@@ -302,7 +302,7 @@ class StudentDatabaseAccess(models.Model):
         ]
 
 
-class DatabaseExport(models.Model):
+class DatabaseSnapshot(models.Model):
     TABLE_NAME_SEPARATOR = '|'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
@@ -352,7 +352,7 @@ class DatabaseExport(models.Model):
         if not self.table_names:
             return []
         else:
-            return self.table_names.split(DatabaseExport.TABLE_NAME_SEPARATOR)
+            return self.table_names.split(DatabaseSnapshot.TABLE_NAME_SEPARATOR)
 
     def _get_stdout_path(self):
         return self.get_path() + '.stdout'
@@ -366,7 +366,7 @@ class DatabaseExport(models.Model):
         import datetime
         self.request_time = timezone.now()
         self.completion_time = None
-        self.table_names = DatabaseExport.TABLE_NAME_SEPARATOR.join(self.database.get_table_names())
+        self.table_names = DatabaseSnapshot.TABLE_NAME_SEPARATOR.join(self.database.get_table_names())
         self.save()
 
         import threading
@@ -394,7 +394,7 @@ class DatabaseExport(models.Model):
         thread.start()
 
 
-@receiver(pre_delete, sender=DatabaseExport)
+@receiver(pre_delete, sender=DatabaseSnapshot)
 def _database_export_pre_delete(sender, instance, **kwargs):
     try:
         import os
@@ -414,7 +414,7 @@ class DatabaseImport(models.Model):
     completion_time = models.DateTimeField(null=True, default=None)
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE, null=False, related_name='imports')
     database = models.ForeignKey(to=StudentDatabase, null=True, on_delete=models.SET_NULL, related_name='imports')
-    source_export = models.ForeignKey(to=DatabaseExport, on_delete=models.CASCADE, null=True, default=None)
+    source_export = models.ForeignKey(to=DatabaseSnapshot, on_delete=models.CASCADE, null=True, default=None)
     source_file = models.CharField(max_length=40, null=False, default='')
     success = models.BooleanField(null=True, default=None)
     stdout = models.TextField(default='')

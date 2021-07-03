@@ -24,6 +24,8 @@
     <option name="TEMPLATE_FOLDERS">
       <list>
         <option value="$MODULE_DIR$/templates" />
+        <option value="$MODULE_DIR$/dbmanager/templates" />
+        <option value="$MODULE_DIR$/lab/templates" />
       </list>
     </option>
   </component>

@@ -43,7 +43,7 @@ def list_students(request):
         raise Http404
 
     context = {
-        'students': Student.objects.order_by('username'),
+        'students': Student.objects.exclude(is_dummy=True).order_by('username'),
     }
 
     return render(request, 'list_students.html', context)
@@ -306,7 +306,7 @@ def view_profile(request, username=None):
 
 @login_if_unauthenticated
 def export_details(request, id, import_errors=None):
-    export = get_object_or_404(DatabaseExport, pk=id)
+    export = get_object_or_404(DatabaseSnapshot, pk=id)
     if not export.student.id == request.user.id \
             and not request.user.is_superuser:
         raise Http404
@@ -330,7 +330,7 @@ def export_details(request, id, import_errors=None):
 @login_if_unauthenticated
 def download_export(request, id):
     # Better to let web server do this somehow!
-    export = get_object_or_404(DatabaseExport, pk=id)
+    export = get_object_or_404(DatabaseSnapshot, pk=id)
     if not export.student.id == request.user.id \
             and not request.user.is_superuser:
         raise Http404
@@ -355,7 +355,7 @@ def export_database(request, db_name):
 
     student = get_object_or_404(Student, pk=request.user.id)
 
-    export = DatabaseExport(student=student, database=database)
+    export = DatabaseSnapshot(student=student, database=database)
     export.initiate()
 
     return redirect('export_details', id=export.id)
@@ -363,7 +363,7 @@ def export_database(request, db_name):
 
 @login_if_unauthenticated
 def delete_export(request, id):
-    export = get_object_or_404(DatabaseExport, pk=id)
+    export = get_object_or_404(DatabaseSnapshot, pk=id)
     if (not export.student.id == request.user.id \
             and not request.user.is_superuser) \
             or request.method != 'POST':
@@ -399,7 +399,7 @@ def delete_database(request, db_name):
 
 @login_if_unauthenticated
 def import_export(request, export_id):
-    export = get_object_or_404(DatabaseExport, pk=export_id)
+    export = get_object_or_404(DatabaseSnapshot, pk=export_id)
     if (not export.student.id == request.user.id
             and not request.user.is_superuser) \
             or request.method != 'POST':

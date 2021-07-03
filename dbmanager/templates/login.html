@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block login %}{% endblock %}
+
+{% block content %}
+    <h1>Login</h1>
+    <ul class="error">
+        {% for error in login_errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    <p>
+        <form action="{% url 'login' %}" method="post">
+            {% csrf_token %}
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            <table>
+                <tr>
+                    <th scope="row"><label for="username_box">Username:</label></th>
+                    <td><input type="text" id="username_box" name="username" size="20" value="{{ username }}"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="password_box">Password:</label></th>
+                    <td><input type="password" id="password_box" name="password" size="20"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input type="submit" value="Login"></td>
+                </tr>
+            </table>
+        </form>
+    </p>
+{% endblock %}

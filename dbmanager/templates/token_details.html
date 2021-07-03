@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block head %}
+    <style>
+#password_copied_hint {
+    display: inline-block;
+    margin-left: 2ex;
+    visibility: hidden;
+    cursor: pointer;
+}
+
+#password_copied_hint.showing {
+    visibility: visible;
+    animation-name: hint;
+    animation-duration: 0.5s;
+}
+
+#password_copied_hint.no-longer-showing {
+    visibility: visible;
+    animation-name: unhint;
+    animation-duration: 1s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes hint {
+    from {
+        opacity: 0.0;
+    }
+    to {
+        opacity: 1.0;
+    }
+}
+
+@keyframes unhint {
+    from {
+        opacity: 1.0;
+    }
+    to {
+        opacity: 0.0;
+    }
+}
+    </style>
+{% endblock %}
+{% block content %}
+    <h1>Access token details</h1>
+
+    <table id="tokens">
+        <tr>
+            <th scope="row">Username</th>
+            <td class="username">{{ token.username }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Password</th>
+            <td>
+                <input type="text" class="password copybox" id="password_box" style="width: 20ex;" value="{{ token.password }}" readonly>
+                <button class="slim" id="copy_password_button">Copy</button>
+                <span id="password_copied_hint">Password copied.</span>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Database</th>
+            <td><a href="{% url 'database_details' db_name=token.database.name %}" class="database-name">{{ token.database.name }}</a></td>
+        </tr>
+        <tr>
+            <th scope="row">Permissions</th>
+            <td>
+                <form action="{% url 'alter_token' token_username=token.username %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="set_permissions">
+                    <input type="radio" class="submit-on-input" name="permissions" id="permissions_ro_box" value="ro" {% if not token.write_permission %}checked{% endif %}>
+                    <label for="permissions_ro_box">read-ony</label>
+                    <span style="display: inline-block; width: 2ex;"></span>
+                    <input type="radio" class="submit-on-input" name="permissions" id="permissions_rw_box" value="rw" {% if token.write_permission %}checked{% endif %}>
+                    <label for="permissions_rw_box">read/write</label>
+                </form>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row"><span style="display: inline-block; height: 2ex;"></span></th>
+        </tr>
+        <tr>
+            <th scope="row"></th>
+            <td>
+                <form action="{% url 'alter_token' token_username=token.username %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" class="slim">Cancel token</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+
+    <h3>Explanation</h3>
+    <p style="max-width: 8in;" class="justify">
+        This access token has clearance to read{% if token.write_permission %} and write{% endif %} the
+        <a href="{% url 'database_details' db_name=token.database.name %}">{{ token.database.name }}</a> database and
+        this database only. To use it, simply use the username and password shown above when connecting to the database.
+        Since the only possible use of this username and password is to connect to this database, they are safe to include
+        in code and other cleartext files. You can cancel this token at any time so that it can no longer be used, and
+        this will have no effect on the database it references.
+    </p>
+    <p style="max-width: 8in;" class="justify">
+        Only the owner of a database can create (or cancel) an access token.
+    </p>
+
+    <script>
+"use strict";
+
+(function() {
+    document.getElementById("copy_password_button").addEventListener("click", function() {
+        let box = document.getElementById("password_box");
+        box.select();
+        box.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        box.setSelectionRange(0, 0);
+
+        let hint = document.getElementById("password_copied_hint");
+        hint.classList.remove("no-longer-showing");
+        hint.classList.add("showing");
+        window.setTimeout(function() {
+            hint.classList.remove("showing");
+            hint.classList.add("no-longer-showing")
+        }, 2000);
+    });
+
+    for (let input of document.querySelectorAll("form .submit-on-input")) {
+        input.addEventListener("input", function(e) {
+            e.target.form.submit();
+        });
+    }
+})();
+    </script>
+{% endblock %}
