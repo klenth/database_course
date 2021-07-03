@@ -215,7 +215,7 @@ def database_details(request, db_name):
     if request.user.is_superuser:
         student = db.owner
     else:
-        student = get_object_or_404(Student, pk=request.user.id)
+        student = get_object_or_404(Student, id=request.user.id)
 
     is_owner = db.owner.id == request.user.id
     is_shared = student in db.other_students.all()
