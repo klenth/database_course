@@ -1,144 +1,150 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
+{% load custom_tags %}
+
 {% block content %}
-    <h1>Database snapshot</h1>
-    <table>
-        <tr>
-            <th scope="row">Database</th>
-            <td>
-                {% if export.database %}
-                    <a href="{% url 'database_details' db_name=export.database.name %}" class="database-name">{{ export.database.name }}</a>
-                {% elif export.database_name %}
-                    <span class="database-name">{{ export.database_name }}</span> (deleted)
-                {% else %}
-                    ???
-                {% endif %}
-            </td>
-        </tr>
-        {% if export.success %}
-            <tr>
-                <th scope="row">Tables</th>
-                <td>{{ export.get_table_names|join:", " }}</td>
-            </tr>
-        {% endif %}
-        <tr>
-            <th scope="row">Requested</th>
-            <td>{{ export.request_time }}</td>
-        </tr>
-        {% if not export.is_active %}
-            <tr>
-                <th scope="row">Completed</th>
-                <td>
-                    {% if export.completion_time %}
-                        {{ export.completion_time }}
-                    {% endif %}
-                </td>
-            </tr>
-        {% endif %}
-        <tr>
-            <th scope="row">Status</th>
-            <td>
-                {% if export.is_active %}
-                    In progress
-                {% elif export.success %}
-                    Complete
-                {% else %}
-                    Failed
-                {% endif %}
-            </td>
-        </tr>
-        {% if export.stdout %}
-            <tr>
-                <th scope="row">Snapshot output</th>
-                <td><pre>{{ export.stdout }}</pre></td>
-            </tr>
-        {% endif %}
-        {% if export.stderr %}
-            <tr>
-                <th scope="row">Snapshot error</th>
-                <td><pre>{{ export.stderr }}</pre></td>
-            </tr>
-        {% endif %}
-    </table>
-
-    {% if export.success %}
-        <h3>Actions</h3>
+<div class="cards">
+    <div class="card">
+        <div class="title">Database snapshot</div>
         <table>
-            <tr class="gap-below">
-                <th scope="row">Download</th>
+            <tr>
+                <th scope="row">Database</th>
                 <td>
-                    <a href="{% url 'download_export' id=export.id %}">{{ export.get_export_filename }}</a>
-                    ({{ export.get_export_size|filesize }})
-                </td>
-            </tr>
-            <tr class="gap-below">
-                <th scope="row" class="top">Import into</th>
-                <td>
-                    {% if import_errors %}
-                        <ul class="error">
-                            {% for error in import_errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
+                    {% if export.database %}
+                        <a href="{% url 'database_details' db_name=export.database.name %}" class="database-name">{{ export.database.name }}</a>
+                    {% elif export.database_name %}
+                        <span class="database-name">{{ export.database_name }}</span> (deleted)
+                    {% else %}
+                        ???
                     {% endif %}
-                    <form action="{% url 'import_export' export_id=export.id %}" method="post">
-                        {% csrf_token %}
-                        <input type="radio" id="import_db_existing_button" name="import_db" value="existing">
-                        <label for="import_db_existing_button">Existing database:</label>
-                        <select id="import_db_box" name="db_id" class="database-name">
-                            {% for db in import_dbs %}
-                                <option value="{{ db.id }}">{{ db.name }}</option>
-                            {% endfor %}
-                        </select>
-                        &nbsp;
-                        (<strong>Note:</strong> any conflicting tables present in this database may be replaced!)
-                        <br>
-                        <input type="radio" id="import_db_new_button" name="import_db" value="new">
-                        <label for="import_db_new_button">New database:
-                            <span class="database-name">{{ export.student.username }}_</span></label><input type="text" class="database-name" size="20" name="new_db_name" id="new_db_name_box" maxlength="{{ max_db_name_length }}" pattern="[a-zA-Z_][a-zA-Z0-9_]*">
-                        <br>
-                        <input type="submit" value="Import">
-                    </form>
                 </td>
             </tr>
-            <tr class="gap-below">
-                <th scope="row">
-                    <form action="{% url 'delete_export' id=export.id %}" method="post">
-                        {% csrf_token %}
-                        <input type="submit" class="delete-button" value="Delete snapshot">
-                    </form>
-                </th>
-                <td></td>
+            {% if export.success %}
+                <tr>
+                    <th scope="row">Tables</th>
+                    <td>{{ export.get_table_names|join:", " }}</td>
+                </tr>
+            {% endif %}
+            <tr>
+                <th scope="row">Requested</th>
+                <td>{{ export.request_time|friendlytime }}</td>
             </tr>
+            {% if not export.is_active %}
+                <tr>
+                    <th scope="row">Completed</th>
+                    <td>
+                        {% if export.completion_time %}
+                            {{ export.completion_time|friendlytime }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+            <tr>
+                <th scope="row">Status</th>
+                <td>
+                    {% if export.is_active %}
+                        In progress
+                    {% elif export.success %}
+                        Complete
+                    {% else %}
+                        Failed
+                    {% endif %}
+                </td>
+            </tr>
+            {% if export.stdout %}
+                <tr>
+                    <th scope="row">Snapshot output</th>
+                    <td><pre>{{ export.stdout }}</pre></td>
+                </tr>
+            {% endif %}
+            {% if export.stderr %}
+                <tr>
+                    <th scope="row">Snapshot error</th>
+                    <td><pre>{{ export.stderr }}</pre></td>
+                </tr>
+            {% endif %}
         </table>
-    {% endif %}
 
-    {% if export.is_active %}
-        <script>
-            "use strict";
-            // Automatically refresh after a little bit
-            window.setTimeout(function() {
-                window.location.reload();
-            }, 2000);
-        </script>
-    {% elif export.success %}
-        <script>
-            "use strict";
+        {% if export.success %}
+            <h3>Actions</h3>
+            <table>
+                <tr class="gap-below">
+                    <th scope="row">Download</th>
+                    <td>
+                        <a href="{% url 'download_export' id=export.id %}">{{ export.get_export_filename }}</a>
+                        ({{ export.get_export_size|filesize }})
+                    </td>
+                </tr>
+                <tr class="gap-below">
+                    <th scope="row" class="top">Import into</th>
+                    <td>
+                        {% if import_errors %}
+                            <ul class="error">
+                                {% for error in import_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <form action="{% url 'import_export' export_id=export.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="radio" id="import_db_existing_button" name="import_db" value="existing">
+                            <label for="import_db_existing_button">Existing database:</label>
+                            <select id="import_db_box" name="db_id" class="database-name">
+                                {% for db in import_dbs %}
+                                    <option value="{{ db.id }}">{{ db.name }}</option>
+                                {% endfor %}
+                            </select>
+                            &nbsp;
+                            (<strong>Note:</strong> any conflicting tables present in this database may be replaced!)
+                            <br>
+                            <input type="radio" id="import_db_new_button" name="import_db" value="new">
+                            <label for="import_db_new_button">New database:
+                                <span class="database-name">{{ export.student.username }}_</span></label><input type="text" class="database-name" size="20" name="new_db_name" id="new_db_name_box" maxlength="{{ max_db_name_length }}" pattern="[a-zA-Z_][a-zA-Z0-9_]*">
+                            <br>
+                            <input type="submit" value="Import">
+                        </form>
+                    </td>
+                </tr>
+                <tr class="gap-below">
+                    <th scope="row">
+                        <form action="{% url 'delete_export' id=export.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="submit" class="delete-button" value="Delete snapshot">
+                        </form>
+                    </th>
+                    <td></td>
+                </tr>
+            </table>
+        {% endif %}
+    </div>
+</div>
 
-            (function() {
-                function $(sel) {
-                    return document.querySelector(sel);
-                }
+{% if export.is_active %}
+    <script>
+        "use strict";
+        // Automatically refresh after a little bit
+        window.setTimeout(function() {
+            window.location.reload();
+        }, 2000);
+    </script>
+{% elif export.success %}
+    <script>
+        "use strict";
 
-                $("#import_db_box").addEventListener("change", function() {
-                    $("#import_db_existing_button").checked = true;
-                })
+        (function() {
+            function $(sel) {
+                return document.querySelector(sel);
+            }
 
-                $("#new_db_name_box").addEventListener("input", function() {
-                    $("#import_db_new_button").checked = true;
-                })
-            })();
-        </script>
-    {% endif %}
+            $("#import_db_box").addEventListener("change", function() {
+                $("#import_db_existing_button").checked = true;
+            })
+
+            $("#new_db_name_box").addEventListener("input", function() {
+                $("#import_db_new_button").checked = true;
+            })
+        })();
+    </script>
+{% endif %}
 {% endblock %}

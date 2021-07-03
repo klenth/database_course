@@ -350,11 +350,11 @@ def export_database(request, db_name):
     if request.method != 'POST':
         raise Http404
     database = get_object_or_404(StudentDatabase, name=db_name)
-    if not database.owner.id == request.user.id \
-            and not database.other_students.filter(pk=request.user.id).exists():
-        raise Http404
+    student = get_object_or_404(Student, id=request.user.id)
 
-    student = get_object_or_404(Student, pk=request.user.id)
+    if not database.owner.pk == student.pk \
+            and not database.other_students.filter(pk=student.pk).exists():
+        raise Http404
 
     export = DatabaseSnapshot(student=student, database=database)
     export.initiate()
@@ -406,7 +406,7 @@ def import_export(request, export_id):
             or request.method != 'POST':
         raise Http404
 
-    student = get_object_or_404(Student, pk=request.user.id)
+    student = get_object_or_404(Student, id=request.user.id)
 
     if 'import_db' in request.POST:
         if request.POST['import_db'] == 'existing':
@@ -431,7 +431,8 @@ def import_export(request, export_id):
             elif not StudentDatabase.is_valid_name(new_db_name):
                 return export_details(request, id=export_id,
                                       import_errors=['Invalid database name {} (database names can be up to {} characters long and may be composed of only letters, digits, and underscores)'.format(new_db_name, StudentDatabase.MAX_NAME_LENGTH)])
-            new_db = student.create_database(new_db_name)
+            #new_db = student.create_database(new_db_name)
+            new_db = StudentDatabase.create(student, new_db_name)
             dimport = DatabaseImport.from_export(export=export,
                                                  database=new_db,
                                                  student=student)
@@ -461,7 +462,7 @@ def import_upload(request):
     #    student = None
     #    databases = StudentDatabase.objects.order_by('owner__username', 'name')
     #else:
-    student = get_object_or_404(Student, pk=request.user.id)
+    student = get_object_or_404(Student, id=request.user.id)
     databases = student.databases.order_by('name')
 
     context = {

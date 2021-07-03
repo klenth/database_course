@@ -82,6 +82,55 @@ def get_db():
 #
 
 
+def _random_password():
+    import random
+    import string
+    return ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(64)])
+
+
+class DatabaseProxyUser(models.Model):
+    #student = models.ForeignKey(to=Student, null=False, on_delete=models.CASCADE, unique=True)
+    student = models.OneToOneField(to=Student, null=False, on_delete=models.CASCADE, related_name='+')
+    username = models.CharField(max_length=30, null=False, blank=False)
+    password = models.CharField(max_length=64, null=False, blank=False, default=_random_password())
+
+    def __str__(self):
+        return f'{self.username} (proxy for {self.student.username})'
+
+    @staticmethod
+    def proxy_for(student):
+        maybe_proxy = DatabaseProxyUser.objects.filter(student=student)
+        if maybe_proxy.exists():
+            return maybe_proxy.get()
+
+        proxy = DatabaseProxyUser(
+            student=student,
+            username=f'proxy/{student.username}'
+        )
+
+        with get_db() as db:
+            cursor = db.cursor()
+
+            cursor.execute('''CREATE USER %s@'localhost' IDENTIFIED BY %s''',
+                           (proxy.username, proxy.password))
+
+            for sdb in student.databases.all():
+                cursor.execute(f'''GRANT ALL ON {sdb.name}.* TO %s@'localhost' ''',
+                               (proxy.username,))
+
+            for sdba in StudentDatabaseAccess.objects.filter(student=student):
+                if sdba.write_permission:
+                    cursor.execute(f'''GRANT ALL ON {sdba.database.name}.* TO %s@'localhost' ''',
+                                   (proxy.username,))
+                else:
+                    cursor.execute(f'''GRANT SELECT ON {sdba.database.name}.* TO %s@'localhost' ''',
+                                   (proxy.username,))
+
+
+        proxy.save()
+        return proxy
+
+
 class DatabaseDeletedError(Exception):
     def __init__(self, database, *args):
         super().__init__(*args)
@@ -113,6 +162,9 @@ class StudentDatabase(models.Model):
                 cursor.execute("""CREATE DATABASE IF NOT EXISTS {}""".format(db_name))
                 cursor.execute(f"""GRANT ALL ON {db_name}.* TO %s@'localhost'""",
                                (student.username,))
+                proxy = DatabaseProxyUser.proxy_for(student)
+                cursor.execute(f"""GRANT ALL ON {db_name}.* TO %s@'localhost'""",
+                               (proxy.username,))
             db = StudentDatabase(name=db_name,
                                  owner=student)
             db.save()
@@ -170,6 +222,7 @@ class StudentDatabase(models.Model):
                 return count == 0
 
     def share_with(self, student, write_permission=False):
+        proxy = DatabaseProxyUser.proxy_for(student)
         sdba_query = StudentDatabaseAccess.objects.filter(database=self, student=student)
         if sdba_query.exists():
             sdba = sdba_query.get()
@@ -181,15 +234,21 @@ class StudentDatabase(models.Model):
                     if write_permission:
                         cursor.execute("""GRANT ALL ON {}.* TO %s@'localhost'""".format(self.name),
                                        (student.username,))
+                        cursor.execute("""GRANT ALL ON {}.* TO %s@'localhost'""".format(self.name),
+                                       (proxy.username,))
                     else:
                         try:
                             cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
                                            (student.username,))
+                            cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
+                                           (proxy.username,))
                         except mysql.errors.ProgrammingError as e:
                             if e.errno != errorcode.ER_NONEXISTING_GRANT:
                                 raise e
                         cursor.execute("GRANT SELECT ON {}.* TO %s@'localhost'".format(self.name),
                                        (student.username,))
+                        cursor.execute("GRANT SELECT ON {}.* TO %s@'localhost'".format(self.name),
+                                       (proxy.username,))
 
                 sdba.save()
         else:
@@ -198,10 +257,13 @@ class StudentDatabase(models.Model):
                 cursor = db.cursor()
                 cursor.execute("GRANT {} on {}.* TO %s@'localhost'".format("ALL" if write_permission else "SELECT", self.name),
                                (student.username,))
+                cursor.execute("GRANT {} on {}.* TO %s@'localhost'".format("ALL" if write_permission else "SELECT", self.name),
+                               (proxy.username,))
 
             sdba.save()
 
     def unshare_with(self, student):
+        proxy = DatabaseProxyUser.proxy_for(student)
         sdba_query = StudentDatabaseAccess.objects.filter(database=self, student=student)
         if sdba_query.exists():
             with get_db() as db:
@@ -209,6 +271,8 @@ class StudentDatabase(models.Model):
                 try:
                     cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
                                    (student.username,))
+                    cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
+                                   (proxy.username,))
                 except mysql.errors.ProgrammingError as e:
                     if e.errno != errorcode.ER_NONEXISTING_GRANT:
                         raise e
@@ -487,11 +551,12 @@ class DatabaseImport(models.Model):
             #from cmpt307_dbmanager.settings import CONTROLLED_DB_PARAMS as DB_PARAMS
             #db_params = dict(DB_PARAMS)
             import dbmanager.settings
+            proxy = DatabaseProxyUser.proxy_for(self.student)
             db_params = {
                 'host': dbmanager.settings.MANAGED_DB_HOST,
                 'port': dbmanager.settings.MANAGED_DB_PORT,
-                'username': self.student.username,
-                'password': self.student.password_clear
+                'username': proxy.username,
+                'password': proxy.password
             }
             self.success = self.database.import_from_file(sql_path=self.get_path(),
                                                           stdout_path=stdout_path, stderr_path=stderr_path,
@@ -547,6 +612,7 @@ class ClassDatabase(models.Model):
             for student in Student.objects.all():
                 cursor.execute("""GRANT SELECT ON `{}`.* TO %s@'localhost'""".format(self.name),
                                (student.username,))
+                proxy = DatabaseProxyUser.proxy_for(student)
         self.save()
 
     def unpublish(self):

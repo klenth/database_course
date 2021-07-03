@@ -107,7 +107,6 @@
 
                     {% if is_owner %}
                         <form action="{% url 'delete_database' db_name=database.name %}" method="get" style="display: inline-block;">
-                            {% csrf_token %}
                             <input type="submit" class="delete-button" value="Delete">
                         </form>
                     {% endif %}

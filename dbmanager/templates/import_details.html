@@ -1,72 +1,78 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load custom_tags %}
 
 {% block content %}
-    <h1>Database import</h1>
-        <table>
-        <tr>
-            <th scope="row">Source</th>
-            <td>
-                {% if import.source_export %}
-                    <a href="{% url 'export_details' id=import.source_export.id %}">Snapshot of <span class="database-name">{{ import.source_export.database.name }}</span></a>
-                {% else %}
-                    Uploaded file
-                {% endif %}
-                ({{ import.get_import_size|filesize }})
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Database</th>
-            <td><a href="{% url 'database_details' db_name=import.database.name %}" class="database-name">{{ import.database.name }}</a></td>
-        </tr>
-        <tr>
-            <th scope="row">Requested</th>
-            <td>{{ import.request_time }}</td>
-        </tr>
-        {% if not import.is_active %}
+<div class="cards">
+    <div class="card">
+        <div class="title">Database import</div>
+            <table>
             <tr>
-                <th scope="row">Completed</th>
+                <th scope="row">Source</th>
                 <td>
-                    {% if import.completion_time %}
-                        {{ import.completion_time }}
+                    {% if import.source_export %}
+                        <a href="{% url 'export_details' id=import.source_export.id %}">Snapshot of <span class="database-name">{{ import.source_export.database.name }}</span></a>
+                    {% else %}
+                        Uploaded file
+                    {% endif %}
+                    ({{ import.get_import_size|filesize }})
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Database</th>
+                <td><a href="{% url 'database_details' db_name=import.database.name %}" class="database-name">{{ import.database.name }}</a></td>
+            </tr>
+            <tr>
+                <th scope="row">Requested</th>
+                <td>{{ import.request_time|friendlytime }}</td>
+            </tr>
+            {% if not import.is_active %}
+                <tr>
+                    <th scope="row">Completed</th>
+                    <td>
+                        {% if import.completion_time %}
+                            {{ import.completion_time|friendlytime }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+            <tr>
+                <th scope="row">Status</th>
+                <td>
+                    {% if import.is_active %}
+                        In progress
+                    {% elif import.success %}
+                        Complete
+                    {% else %}
+                        Failed
                     {% endif %}
                 </td>
             </tr>
-        {% endif %}
-        <tr>
-            <th scope="row">Status</th>
-            <td>
-                {% if import.is_active %}
-                    In progress
-                {% elif import.success %}
-                    Complete
-                {% else %}
-                    Failed
-                {% endif %}
-            </td>
-        </tr>
-        {% if import.stdout %}
-            <tr>
-                <th scope="row">Import output</th>
-                <td><pre>{{ import.stdout }}</pre></td>
-            </tr>
-        {% endif %}
-        {% if import.stderr %}
-            <tr>
-                <th scope="row">Import error</th>
-                <td><pre>{{ import.stderr }}</pre></td>
-            </tr>
-        {% endif %}
-    </table>
+            {% if import.stdout %}
+                <tr>
+                    <th scope="row">Import output</th>
+                    <td><pre>{{ import.stdout }}</pre></td>
+                </tr>
+            {% endif %}
+            {% if import.stderr %}
+                <tr>
+                    <th scope="row">Import error</th>
+                    <td><pre>{{ import.stderr }}</pre></td>
+                </tr>
+            {% endif %}
+        </table>
 
-    {% if import.is_active %}
-        <script>
+    </div>
+</div>
+
+{% if import.is_active %}
+    <script>
 "use strict";
 (function() {
-    window.setTimeout(function() {
-        window.location.reload();
-    }, 2000);
+window.setTimeout(function() {
+    window.location.reload();
+}, 2000);
 })();
-        </script>
-    {% endif %}
+    </script>
+{% endif %}
 {% endblock %}
