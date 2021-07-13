@@ -14,6 +14,7 @@ class Person(auth_models.User):
         verbose_name = 'Person'
         verbose_name_plural = 'People'
         abstract = True
+        ordering = ('sortable_name',)
 
     def get_sortable_name(self):
         return self.sortable_name if self.sortable_name else self.name
@@ -59,6 +60,7 @@ class Student(Person):
 
     class Meta:
         verbose_name = 'Student'
+        ordering = ('sortable_name',)
 
     def score_on_problem(self, problem):
         maybe_score = self.problem_scores.filter(problem=problem)
