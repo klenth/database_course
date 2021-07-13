@@ -127,22 +127,42 @@ def student_home(request):
     if request.user.is_superuser:
         return redirect('list_students')
 
+    #student_query = Student.objects.filter(id=request.user.id)
+    #student = student_query.get() if student_query.exists() else None
+    student = get_object_or_404(Student, id=request.user.id)
+
+    courses = Course.objects.filter(enrollment__student=student, enrollment__active=True)
+    print(courses)
+    if len(courses) == 1:
+        return redirect('student_course_home', course_id=courses.get().id)
+    else:
+        context = {
+            'student': student,
+            'courses': courses,
+        }
+        return render(request, 'student_home.html', context)
+
+
+@login_if_unauthenticated
+def student_course_home(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
     student_query = Student.objects.filter(id=request.user.id)
 
     student = student_query.get() if student_query.exists() else None
 
     context = {
         'student': student,
-        'exports': student.exports.order_by('request_time'),
+        'course': course,
+        #'exports': student.exports.order_by('request_time'),
         'max_db_name_length': StudentDatabase.MAX_NAME_LENGTH - (len(student.username) + 1),
         'new_db_errors': [],
     }
 
     if student:
-        context['databases'] = student.databases.all().order_by('name')
-        context['other_databases'] = student.shared_databases.order_by('database__owner__username', 'database__name')
+        #context['databases'] = student.databases.all().order_by('name')
+        #context['other_databases'] = student.shared_databases.order_by('database__owner__username', 'database__name')
 
-        for db in context['databases']:
+        for db in student.databases.all():
             try:
                 db.get_table_names()
             except DatabaseDeletedError:
@@ -150,14 +170,14 @@ def student_home(request):
 
     if request.method == 'POST':
         if 'action' in request.POST and request.POST['action'] == 'new_database':
-            if 'database_name' in request.POST and 'database_name':
+            if request.POST.get('database_name', None):
                 db_name = student.username + '_' + request.POST['database_name']
                 if StudentDatabase.objects.filter(name=db_name).exists():
                     context['new_db_errors'].append('Database {} already exists.'.format(db_name))
                 elif StudentDatabase.is_valid_name(db_name):
                     # context['new_db'] = student.create_database(db_name)
-                    context['new_db'] = StudentDatabase.create(student, db_name)
-                    return redirect('student_home')
+                    context['new_db'] = StudentDatabase.create(student, course, db_name)
+                    return redirect('student_course_home', course_id=course.id)
                 else:
                     context['new_db_errors'].append("Invalid database name: {} (database names can be up to {} characters long and may be composed of only letters, digits, and underscores)".format(db_name, StudentDatabase.MAX_NAME_LENGTH))
             else:
@@ -165,7 +185,7 @@ def student_home(request):
         else:
             raise Http404
 
-    return render(request, 'student_home.html', context)
+    return render(request, 'student_course_home.html', context)
 
 
 def logout(request):
@@ -259,7 +279,9 @@ def database_details(request, db_name):
             raise Http404
 
     already_shared_student_ids = list(db.other_students.values_list('id', flat=True)) + [db.owner.id]
-    context['unshared_students'] = Student.objects.exclude(id__in=already_shared_student_ids).order_by('last_name', 'first_name')
+    #context['unshared_students'] = Student.objects.exclude(id__in=already_shared_student_ids).order_by('last_name', 'first_name')
+    context['unshared_students'] = db.course.students.exclude(id__in=already_shared_student_ids).order_by('last_name', 'first_name')
+
 
     return render(request, 'database_details.html', context)
 

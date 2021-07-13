@@ -101,7 +101,7 @@ class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid1)
     title = models.CharField(max_length=80, null=False, blank=False)
     instructor = models.ForeignKey(to=Instructor, null=False, on_delete=models.RESTRICT, related_name='courses')
-    students = models.ManyToManyField(to=Student, through='Enrollment')
+    students = models.ManyToManyField(to=Student, through='Enrollment', related_name='courses')
 
     class Meta:
         constraints = (

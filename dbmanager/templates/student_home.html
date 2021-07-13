@@ -1,153 +1,19 @@
 {% extends 'base.html' %}
-{% load humanize %}
-{% load functional %}
 
 {% block content %}
-    <div class="cards">
-        <div class="card">
-            <div class="title">My databases</div>
-            {% if databases %}
-                <table id="databases">
-                    <tr>
-                        <th scope="col">Name</th>
-                        <th scope="col">Created</th>
-                        <th scope="col">Tables</th>
-                        <th scope="col">Shared with</th>
-                    </tr>
-                    {% for database in databases %}
-                        <tr class="gap-below{% if database.is_deleted %} deleted{% endif %}">
-                            <td>
-                                <a href="{% url 'database_details' db_name=database.name %}" class="database-name">{{ database.name }}</a>
-                            </td>
-                            <td>
-                                {{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}
-                            </td>
-                            <td>
-                                {% if database.is_deleted %}
-                                    (Database has been deleted externally.<br>You probably want to <a href="{% url 'delete_database' db_name=database.name %}">delete it here</a> too.)
-                                {% else %}
-                                    {{ database.get_table_names_safe|join:", "|truncatechars:100 }}
-                                {% endif %}
-                            </td>
-                            <td>
-                                {{ database.other_students.all|map:"get_full_name"|join:", "|truncatechars:100 }}
-                            </td>
-                        </tr>
-                    {% endfor %}
+<div class="cards">
 
-                    {% if new_db %}
-                        <tr class="gap-below">
-                            <td>
-                                <a href="{% url 'database_details' db_name=new_db.name %}" class="database-name">{{ new_db.name }}</a>
-                            </td>
-                            <td>
-                                {{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}
-                            </td>
-                            <td>
-                                <!-- Newly-created database - should have no tables -->
-                            </td>
-                            <td>
-                                <!-- Newly-created database - should have no shares -->
-                            </td>
-                        </tr>
-                    {% endif %}
-                </table>
-            {% else %}
-                (None)
-            {% endif %}
-
-            <h2>Add database</h2>
-            <p>
-                <form action="{% url 'student_home' %}" method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="new_database">
-                    <label for="database_name_box">New database:</label> &nbsp;&nbsp;
-                    <label for="database_name_box" class="database-name">{{ student.username }}_</label><input type="text" size="20" maxlength="{{ max_db_name_length }}" id="database_name_box" name="database_name" class="database-name" pattern="[a-zA-Z_][a-zA-Z0-9_]*">
-                    <input type="submit" value="Create">
-                </form>
-                <ul class="error">
-                    {% for error in new_db_errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            </p>
-            <p><a href="{% url 'import_upload' %}">Import a database from file</a></p>
-        </div>
-
-            {% if other_databases.count %}
-                <div class="card">
-                    <div class="title">Databases shared with me</div>
-                    <table id="other-databases">
-                        <tr>
-                            <th scope="col">Name</th>
-                            <th scope="col">Created</th>
-                            <th scope="col">Tables</th>
-                            <th scope="col">Access</th>
-                            <th scope="col">Also shared with</th>
-                        </tr>
-                        {% for sdba in other_databases %}{% with database=sdba.database %}
-                            <tr {% if database.is_deleted %}class="deleted"{% endif %}>
-                                <td><a href="{% url 'database_details' db_name=database.name %}" class="database-name">{{ database.name }}</a></td>
-                                <td>{{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}</td>
-                                <td>{% if database.is_deleted %}
-                                        (Database has been deleted externally.<br>There is still a record of it in this web app but any tables it once contained are gone.)
-                                    {% else %}
-                                        {{ database.get_table_names_safe|join:", "|truncatechars:100 }}
-                                    {% endif %}</td>
-                                <td>{% if sdba.write_permission %}read/write{% else %}read-only{% endif %}</td>
-                                <td>{{ database.other_students.all|except:student|map:"get_full_name"|join:", "|default:"(none)"|truncatechars:100 }}</td>
-                            </tr>
-                        {% endwith %}{% endfor %}
-                    </table>
-                </div>
-            {% endif %}
-
-            {% if exports.count %}
-                <div class="card">
-                    <div class="title">Database snapshots</div>
-                    <table id="exports">
-                        <tr>
-                            <th scope="col">When</th>
-                            <th scope="col">Database</th>
-                            <th scope="col">Status</th>
-                            <th scope="col"></th>
-                        </tr>
-                        {% for export in exports %}
-                            <tr>
-                                <td>{{ export.request_time }}</td>
-                                <td>
-                                    {% if export.database %}
-                                        <a href="{% url 'database_details' db_name=export.database.name %}" class="database-name">{{ export.database.name }}</a>
-                                    {% elif export.database_name %}
-                                        <span class="database-name">{{ export.database_name }}</span> (deleted)
-                                    {% else %}
-                                        ???
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if export.success %}
-                                        <a href="{% url 'export_details' id=export.id %}">Complete</a>
-                                        | <a href="{% url 'download_export' id=export.id %}">Download</a>
-                                    {% elif  export.is_active %}
-                                        <a href="{% url 'export_details' id=export.id %}">In progress</a>
-                                    {% elif  export.success is None %}
-                                        <a href="{% url 'export_details' id=export.id%}">Failed</a>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if export.success is not None %}
-                                        <form action="{% url 'delete_export' id=export.id %}" method="post">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="next" value="{% url 'student_home' %}">
-                                            <input type="submit" class="delete-button" value="Delete">
-                                        </form>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-            {% endif %}
-        </div>
+    <div class="card">
+        <div class="title">Active courses</div>
+        <ul>
+            {% for course in courses %}
+                <li><a href="{% url 'student_course_home' course_id=course.id %}">{{ course.title }}</a></li>
+            {% empty %}
+                You do not have any active courses.
+            {% endfor %}
+        </ul>
     </div>
+
+</div>
+
 {% endblock %}

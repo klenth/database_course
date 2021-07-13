@@ -30,6 +30,7 @@ urlpatterns = [
     path('profile/<slug:username>', views.view_profile, name='view_profile'),
     path('profile', views.view_profile, name='view_profile'),
     path('', views.student_home, name='student_home'),
+    path('course/<uuid:course_id>', views.student_course_home, name='student_course_home'),
     path('login', views.login, name='login'),
     path('logout', views.logout, name='logout'),
 

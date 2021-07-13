@@ -92,7 +92,7 @@ class DatabaseProxyUser(models.Model):
     #student = models.ForeignKey(to=Student, null=False, on_delete=models.CASCADE, unique=True)
     student = models.OneToOneField(to=Student, null=False, on_delete=models.CASCADE, related_name='+')
     username = models.CharField(max_length=30, null=False, blank=False)
-    password = models.CharField(max_length=64, null=False, blank=False, default=_random_password())
+    password = models.CharField(max_length=64, null=False, blank=False, default=_random_password)
 
     def __str__(self):
         return f'{self.username} (proxy for {self.student.username})'
@@ -140,6 +140,7 @@ class DatabaseDeletedError(Exception):
 class StudentDatabase(models.Model):
     MAX_NAME_LENGTH = 64
     name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True)    # note: schema name at most 64 characters (must include username!)
+    course = models.ForeignKey(to=Course, null=False, on_delete=models.CASCADE)
     owner = models.ForeignKey(to=Student, related_name='databases', on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     other_students = models.ManyToManyField(to=Student, through='StudentDatabaseAccess', related_name='other_databases')
@@ -149,7 +150,7 @@ class StudentDatabase(models.Model):
         self._saved_table_names = None
 
     @staticmethod
-    def create(student, db_name):
+    def create(student, course, db_name):
         db_query = StudentDatabase.objects.filter(name=db_name)
         db = db_query.get() if db_query.exists() else None
         if db and db.owner == student:
@@ -166,6 +167,7 @@ class StudentDatabase(models.Model):
                 cursor.execute(f"""GRANT ALL ON {db_name}.* TO %s@'localhost'""",
                                (proxy.username,))
             db = StudentDatabase(name=db_name,
+                                 course=course,
                                  owner=student)
             db.save()
             return db
@@ -374,6 +376,7 @@ class DatabaseSnapshot(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     request_time = models.DateTimeField(auto_now_add=False, null=True, default=None)
     completion_time = models.DateTimeField(null=True, default=None)
+    course = models.ForeignKey(to=Course, null=False, on_delete=models.CASCADE)
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE, null=False, related_name='exports')
     database = models.ForeignKey(to=StudentDatabase, null=True, on_delete=models.SET_NULL, related_name='exports')
     database_name = models.CharField(max_length=StudentDatabase.MAX_NAME_LENGTH, null=False, default='')
@@ -381,6 +384,9 @@ class DatabaseSnapshot(models.Model):
     success = models.BooleanField(null=True, default=None)
     stdout = models.TextField(default='')
     stderr = models.TextField(default='')
+
+    class Meta:
+        ordering = ('request_time',)
 
     def __init__(self, *args, **kwargs):
         if 'database_name' not in kwargs and 'database' in kwargs:
@@ -580,6 +586,7 @@ class DatabaseImport(models.Model):
 
 class ClassDatabase(models.Model):
     MAX_NAME_LENGTH = 64
+    course = models.ForeignKey(to=Course, null=False, on_delete=models.CASCADE)
     name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True)    # note: schema name at most 64 characters (must include username!)
     published = models.BooleanField(default=False)
 
@@ -690,7 +697,7 @@ def _access_token_pre_delete(sender, instance, **kwargs):
     with get_db() as db:
         cursor = db.cursor()
         try:
-            cursor.execute('DROP USER %s', (instance.username,))
+            cursor.execute('''DROP USER %s@'localhost' ''', (instance.username,))
         except mysql.ProgrammingError as e:
             print(e)
 
