@@ -132,7 +132,6 @@ def student_home(request):
     student = get_object_or_404(Student, id=request.user.id)
 
     courses = Course.objects.filter(enrollment__student=student, enrollment__active=True)
-    print(courses)
     if len(courses) == 1:
         return redirect('student_course_home', course_id=courses.get().id)
     else:
@@ -279,9 +278,7 @@ def database_details(request, db_name):
             raise Http404
 
     already_shared_student_ids = list(db.other_students.values_list('id', flat=True)) + [db.owner.id]
-    #context['unshared_students'] = Student.objects.exclude(id__in=already_shared_student_ids).order_by('last_name', 'first_name')
-    context['unshared_students'] = db.course.students.exclude(id__in=already_shared_student_ids).order_by('last_name', 'first_name')
-
+    context['unshared_students'] = db.course.students.exclude(id__in=already_shared_student_ids)
 
     return render(request, 'database_details.html', context)
 
@@ -519,7 +516,6 @@ def import_upload(request):
                     db = student.create_database(db_name)
 
             if db is not None:
-                print(repr(request.headers['Content-Length']))
                 f = request.FILES['file']
                 dimport = DatabaseImport.from_upload(file=f,
                                                      student=student, database=db)

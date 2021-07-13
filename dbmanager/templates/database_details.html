@@ -191,7 +191,7 @@
                             <td>
                                 <select id="new_access_student_box" size="1">
                                     {% for student in unshared_students %}
-                                        <option value="{{ student.username }}">{{ student.get_full_name }}</option>
+                                        <option value="{{ student.username }}">{{ student.name }}</option>
                                     {% endfor %}
                                 </select>
                                 <button id="new_access_add_button" type="button">Add</button>

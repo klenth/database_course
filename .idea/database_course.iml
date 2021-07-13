@@ -26,6 +26,7 @@
         <option value="$MODULE_DIR$/templates" />
         <option value="$MODULE_DIR$/dbmanager/templates" />
         <option value="$MODULE_DIR$/lab/templates" />
+        <option value="$MODULE_DIR$/course/templates" />
       </list>
     </option>
   </component>

@@ -17,7 +17,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 
+from course import views as course_views
+
 urlpatterns = [
+    path('', course_views.home, name='home'),
     path('lab/', include('lab.urls')),
     path('databases/', include('dbmanager.urls')),
     path('admin/', admin.site.urls),

@@ -14,6 +14,7 @@ class Person(auth_models.User):
         verbose_name = 'Person'
         verbose_name_plural = 'People'
         abstract = True
+        ordering = ('sortable_name',)
 
     def get_sortable_name(self):
         return self.sortable_name if self.sortable_name else self.name
@@ -59,6 +60,7 @@ class Student(Person):
 
     class Meta:
         verbose_name = 'Student'
+        ordering = ('sortable_name',)
 
     def score_on_problem(self, problem):
         maybe_score = self.problem_scores.filter(problem=problem)
@@ -71,7 +73,7 @@ class Student(Person):
     def courses(self):
         if self.is_dummy:
             return DummyStudent.objects.get(id=self.id).courses()
-        return self.course_set.all()
+        return Course.objects.filter(enrollment__student=self, enrollment__active=True)
 
 
 class DummyStudent(Student):
@@ -101,7 +103,7 @@ class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid1)
     title = models.CharField(max_length=80, null=False, blank=False)
     instructor = models.ForeignKey(to=Instructor, null=False, on_delete=models.RESTRICT, related_name='courses')
-    students = models.ManyToManyField(to=Student, through='Enrollment', related_name='courses')
+    students = models.ManyToManyField(to=Student, through='Enrollment', related_name='+')
 
     class Meta:
         constraints = (
