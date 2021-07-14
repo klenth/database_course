@@ -379,7 +379,7 @@ def export_database(request, db_name):
             and not database.other_students.filter(pk=student.pk).exists():
         raise Http404
 
-    export = DatabaseSnapshot(student=student, database=database)
+    export = DatabaseSnapshot(student=student, database=database, course=database.course)
     export.initiate()
 
     return redirect('export_details', id=export.id)
@@ -388,17 +388,24 @@ def export_database(request, db_name):
 @login_if_unauthenticated
 def delete_export(request, id):
     export = get_object_or_404(DatabaseSnapshot, pk=id)
-    if (not export.student.id == request.user.id \
+    if (not export.student.id == request.user.id
             and not request.user.is_superuser) \
             or request.method != 'POST':
         raise Http404
 
+    db_name = export.database.name if export.database else None
+    course = None
+    if not db_name:
+        course = export.course
     export.delete()
 
     if 'next' in request.POST:
         return HttpResponseRedirect(request.POST['next'])
     else:
-        return redirect('student_home')
+        if db_name:
+            return redirect('database_details', db_name=export.database.name)
+        else:
+            return redirect('student_course_home', course_id=course.id)
 
 
 @login_if_unauthenticated
@@ -414,11 +421,12 @@ def delete_database(request, db_name):
     if request.method == 'GET':
         return render(request, 'dbmanager/delete_database.html', context)
     elif request.method == 'POST':
+        course = database.course
         database.delete()
         if 'next' in request.POST:
             return HttpResponseRedirect(request.POST['next'])
         else:
-            return redirect('student_home')
+            return redirect('student_course_home', course_id=course.id)
 
 
 @login_if_unauthenticated
@@ -455,7 +463,7 @@ def import_export(request, export_id):
                 return export_details(request, id=export_id,
                                       import_errors=['Invalid database name {} (database names can be up to {} characters long and may be composed of only letters, digits, and underscores)'.format(new_db_name, StudentDatabase.MAX_NAME_LENGTH)])
             #new_db = student.create_database(new_db_name)
-            new_db = StudentDatabase.create(student, new_db_name)
+            new_db = StudentDatabase.create(student, export.course, new_db_name)
             dimport = DatabaseImport.from_export(export=export,
                                                  database=new_db,
                                                  student=student)
@@ -480,16 +488,18 @@ def import_details(request, id):
 
 
 @login_if_unauthenticated
-def import_upload(request):
+def import_upload(request, course_id):
     #if request.user.is_superuser:
     #    student = None
     #    databases = StudentDatabase.objects.order_by('owner__username', 'name')
     #else:
     student = get_object_or_404(Student, id=request.user.id)
-    databases = student.databases.order_by('name')
+    course = get_object_or_404(Course, pk=course_id)
+    databases = StudentDatabase.objects.filter(owner=student, course=course)
 
     context = {
         'student': student,
+        'course': course,
         'databases': databases,
         'max_db_name_length': StudentDatabase.MAX_NAME_LENGTH - (len(student.username) + 1),
         'import_errors': [],
@@ -517,12 +527,12 @@ def import_upload(request):
                 elif not StudentDatabase.is_valid_name(db_name):
                     context['import_errors'].append('Invalid database name {} (database names can be up to {} characters long and may only be composed of letters, digits, and underscores)'.format(db_name, StudentDatabase.MAX_NAME_LENGTH))
                 else:
-                    db = student.create_database(db_name)
+                    db = StudentDatabase.create(student, course, db_name)
 
             if db is not None:
                 f = request.FILES['file']
                 dimport = DatabaseImport.from_upload(file=f,
-                                                     student=student, database=db)
+                                                     student=student, database=db, course=course)
                 dimport.initiate()
                 return redirect('import_details', id=dimport.id)
 

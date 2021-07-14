@@ -111,8 +111,10 @@ class DatabaseProxyUser(models.Model):
         with get_db() as db:
             cursor = db.cursor()
 
-            cursor.execute('''CREATE USER IF NOT EXISTS %s@'localhost' IDENTIFIED BY %s''',
-                           (proxy.username, proxy.password))
+            cursor.execute('''CREATE USER IF NOT EXISTS %s@'localhost' ''',
+                           (proxy.username,))
+            cursor.execute('''ALTER USER %s@'localhost' IDENTIFIED BY %s''',
+                           (proxy.username, proxy.password,))
 
             for sdb in student.databases.all():
                 cursor.execute(f'''GRANT ALL ON {sdb.name}.* TO %s@'localhost' ''',
@@ -126,6 +128,7 @@ class DatabaseProxyUser(models.Model):
                     cursor.execute(f'''GRANT SELECT ON {sdba.database.name}.* TO %s@'localhost' ''',
                                    (proxy.username,))
 
+            db.commit()
 
         proxy.save()
         return proxy
@@ -378,6 +381,7 @@ class DatabaseSnapshot(models.Model):
     completion_time = models.DateTimeField(null=True, default=None)
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE, null=False, related_name='exports')
     database = models.ForeignKey(to=StudentDatabase, null=True, on_delete=models.SET_NULL, related_name='exports')
+    course = models.ForeignKey(to=Course, null=False, on_delete=models.CASCADE, related_name='+')
     database_name = models.CharField(max_length=StudentDatabase.MAX_NAME_LENGTH, null=False, default='')
     table_names = models.TextField(null=False, default='')
     success = models.BooleanField(null=True, default=None)
@@ -485,6 +489,7 @@ class DatabaseImport(models.Model):
     completion_time = models.DateTimeField(null=True, default=None)
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE, null=False, related_name='imports')
     database = models.ForeignKey(to=StudentDatabase, null=True, on_delete=models.SET_NULL, related_name='imports')
+    course = models.ForeignKey(to=Course, null=False, on_delete=models.CASCADE, related_name='+')
     source_export = models.ForeignKey(to=DatabaseSnapshot, on_delete=models.CASCADE, null=True, default=None)
     source_file = models.CharField(max_length=40, null=False, default='')
     success = models.BooleanField(null=True, default=None)
@@ -495,7 +500,7 @@ class DatabaseImport(models.Model):
     def from_export(export, *args, **kwargs):
         if export is None:
             raise ValueError('export is None')
-        imp = DatabaseImport(*args, **kwargs)
+        imp = DatabaseImport(course=export.course, *args, **kwargs)
         imp.source_export = export
         imp.source_file = export.get_file_name()
         return imp
@@ -547,6 +552,13 @@ class DatabaseImport(models.Model):
         self.completion_time = None
         self.save()
 
+        proxy = DatabaseProxyUser.proxy_for(self.student)
+
+        with get_db() as db:
+            cursor = db.cursor()
+            cursor.execute(f'''GRANT ALL ON {self.database.name}.* TO %s@'localhost' ''',
+                           (proxy.username,))
+
         import threading
 
         stdout_path, stderr_path = self._get_stdout_path(), self._get_stderr_path()
@@ -556,13 +568,13 @@ class DatabaseImport(models.Model):
             #from cmpt307_dbmanager.settings import CONTROLLED_DB_PARAMS as DB_PARAMS
             #db_params = dict(DB_PARAMS)
             import dbmanager.settings
-            proxy = DatabaseProxyUser.proxy_for(self.student)
             db_params = {
                 'host': dbmanager.settings.MANAGED_DB_HOST,
                 'port': dbmanager.settings.MANAGED_DB_PORT,
                 'username': proxy.username,
                 'password': proxy.password
             }
+
             self.success = self.database.import_from_file(sql_path=self.get_path(),
                                                           stdout_path=stdout_path, stderr_path=stderr_path,
                                                           db_params=db_params)

@@ -1,47 +1,67 @@
 {% extends 'base.html' %}
 
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_home' %}">Database manager</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_course_home' course_id=course.id %}">{{ course.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        Import uploaded file
+    </span>
+{% endblock %}
+
 {% block content %}
-    <h1>Import file into database</h1>
-    <ul class="error">
-        {% for error in import_errors %}
-            <li>{{ error }}</li>
-        {% endfor %}
-    </ul>
-    <form action="{% url 'import_upload' %}" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <table>
-            <tr>
-                <th scope="row"><label for="file_box">File</label></th>
-                <td><input type="file" id="file_box" name="file" accept=".sql,application/sql"></td>
-            </tr>
-            <tr>
-                <th scope="row" class="top" style="padding-top: 2ex;">Database</th>
-                <td style="padding-top: 2ex;">
-                    <input type="radio" id="db_kind_existing_button" name="db_kind" value="existing">
-                    <label for="db_kind_existing_button" style="display: inline-block; width: 1in; padding-right: 3ex;">Existing</label>
-                    <select id="existing_db_name_box" name="existing_db_name" class="database-name">
-                        {% for database in databases %}
-                            <option value="{{ database.name }}">{{ database.name }}</option>
-                        {% endfor %}
-                    </select>
-                    &nbsp;&nbsp;
-                    (<strong>Note:</strong> any conflicting tables present in this database may be replaced!)
-                </td>
-            </tr>
-            <tr></tr>
-                <th scope="row"></th>
-                <td>
-                    <input type="radio" id="db_kind_new_button" name="db_kind" value="new">
-                    <label for="db_kind_new_button" style="display: inline-block; width: 1in; padding-right: 3ex;">New</label>
-                    {% if student %}<label for="new_db_name_box"><span class="database-name">{{ student.username }}_</span></label>{% endif %}<input type="text" id="new_db_name_box" name="new_db_name" size="30" class="database-name" maxlength="{{ max_db_name_length }}" pattern="[a-zA-Z_][a-zA-Z0-9_]*">
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"></th>
-                <td style="padding-top: 4ex;"><input type="submit" value="Import"></td>
-            </tr>
-        </table>
-    </form>
+<div class="cards">
+    <div class="card">
+        <div class="title">Import file into database</div>
+        <ul class="error">
+            {% for error in import_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        <form action="{% url 'import_upload' course_id=course.id %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <table>
+                <tr>
+                    <th scope="row"><label for="file_box">File</label></th>
+                    <td><input type="file" id="file_box" name="file" accept=".sql,application/sql"></td>
+                </tr>
+                <tr>
+                    <th scope="row" class="top" style="padding-top: 2ex;">Database</th>
+                    <td style="padding-top: 2ex;">
+                        <input type="radio" id="db_kind_existing_button" name="db_kind" value="existing">
+                        <label for="db_kind_existing_button" style="display: inline-block; width: 1in; padding-right: 3ex;">Existing</label>
+                        <select id="existing_db_name_box" name="existing_db_name" class="database-name">
+                            {% for database in databases %}
+                                <option value="{{ database.name }}">{{ database.name }}</option>
+                            {% endfor %}
+                        </select>
+                        &nbsp;&nbsp;
+                        (<strong>Note:</strong> any conflicting tables present in this database may be replaced!)
+                    </td>
+                </tr>
+                <tr></tr>
+                    <th scope="row"></th>
+                    <td>
+                        <input type="radio" id="db_kind_new_button" name="db_kind" value="new">
+                        <label for="db_kind_new_button" style="display: inline-block; width: 1in; padding-right: 3ex;">New</label>
+                        {% if student %}<label for="new_db_name_box"><span class="database-name">{{ student.username }}_</span></label>{% endif %}<input type="text" id="new_db_name_box" name="new_db_name" size="30" class="database-name" maxlength="{{ max_db_name_length }}" pattern="[a-zA-Z_][a-zA-Z0-9_]*">
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"></th>
+                    <td style="padding-top: 4ex;"><button type="submit">Import</button></td>
+                </tr>
+            </table>
+        </form>
+
+    </div>
+</div>
 
     <script>
 "use strict";

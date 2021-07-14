@@ -2,6 +2,31 @@
 {% load humanize %}
 {% load custom_tags %}
 
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_home' %}">Database manager</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_course_home' course_id=import.course.id %}">{{ import.course.title }}</a>
+    </span>
+    {% if import.source_export %}
+        <span class="breadcrumb">
+            <a href="{% url 'export_details' id=import.source_export.id %}">Export of
+                {{ import.source_export.database_name }} ({{ import.source_export.request_time|friendlytime }})</a>
+        </span>
+    {% endif %}
+    {% if import.database %}
+        <span class="breadcrumb">
+            Import into {{ import.database.name }} ({{ import.request_time|friendlytime }})
+        </span>
+    {% else %}
+        Import ({{ import.request_time|friendlytime }})
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="cards">
     <div class="card">

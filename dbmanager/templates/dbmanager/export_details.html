@@ -1,7 +1,26 @@
 {% extends 'base.html' %}
 {% load humanize %}
-
 {% load custom_tags %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_home' %}">Database manager</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_course_home' course_id=export.database.course.id %}">{{ export.database.course.title }}</a>
+    </span>
+    {% if export.database %}
+        <span class="breadcrumb">
+            <a href="{% url 'database_details' db_name=export.database.name %}"><span class="database-name">{{ export.database.name }}</span></a>
+        </span>
+    {% endif %}
+    <span class="breadcrumb">
+        Snapshot ({{ export.request_time|friendlytime }})
+    </span>
+{% endblock %}
 
 {% block content %}
 <div class="cards">

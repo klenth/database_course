@@ -40,6 +40,6 @@ urlpatterns = [
     path('export/<uuid:id>/delete', views.delete_export, name='delete_export'),
     path('export/<uuid:export_id>/import', views.import_export, name='import_export'),
     path('import/<uuid:id>', views.import_details, name='import_details'),
-    path('import', views.import_upload, name='import_upload'),
+    path('course/<uuid:course_id>/import', views.import_upload, name='import_upload'),
 ]
 

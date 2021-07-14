@@ -1,6 +1,21 @@
 {% extends 'base.html' %}
 {% load functional %}
 
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_home' %}">Database manager</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_course_home' course_id=database.course.id %}">{{ database.course.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        <span class="database-name">{{ database.name }}</span>
+    </span>
+{% endblock %}
+
 {% comment %}
 {% block head %}
     <style>
@@ -91,7 +106,7 @@
                     {% if not database.is_deleted %}
                     <form action="{% url 'export_database' db_name=database.name %}" method="post" style="display: inline-block;">
                         {% csrf_token %}
-                        <input type="submit" value="Make snapshot...">
+                        <button type="submit">Make snapshot...</button>
                     </form>
 
                     <span style="display: inline-block; width: 2ex;"></span>
@@ -100,14 +115,14 @@
                     {% if is_owner %}
                         <form action="{% url 'create_token' db_name=database.name %}" method="post" style="display: inline-block;">
                             {% csrf_token %}
-                            <input type="submit" value="Create access token">
+                            <button type="submit">Create access token</button>
                         </form>
                         <span style="display: inline-block; width: 2ex;"></span>
                     {% endif %}
 
                     {% if is_owner %}
                         <form action="{% url 'delete_database' db_name=database.name %}" method="get" style="display: inline-block;">
-                            <input type="submit" class="delete-button" value="Delete">
+                            <button type="submit" class="delete-button">Delete</button>
                         </form>
                     {% endif %}
                 </td>
@@ -202,7 +217,7 @@
 
                     <p>
                         <span id="share_submit_button_container">
-                            <input id="share_submit_button" type="submit" value="Save changes to shares">
+                            <button type="submit" id="share_submit_button">Save changes to shares</button>
                         </span>
                     </p>
                 </form>
@@ -210,7 +225,7 @@
         {% endif %}
 
         <p>
-            Back to <a href="{% url 'student_home' %}">my databases</a>
+            Back to <a href="{% url 'student_course_home' course_id=database.course.id %}">my databases</a>
         </p>
     </div>
 </div>

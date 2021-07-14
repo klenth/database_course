@@ -3,6 +3,18 @@
 {% load functional %}
 {% load course_databases %}
 
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_home' %}">Database manager</a>
+    </span>
+    <span class="breadcrumb">
+        {{ course.title }}
+    </span>
+{% endblock %}
+
 {% block content %}
     <div class="cards">
         <div class="card">
@@ -76,7 +88,11 @@
                     {% endfor %}
                 </ul>
             </p>
-            <p><a href="{% url 'import_upload' %}">Import a database from file</a></p>
+            <form action="{% url 'import_upload' course_id=course.id %}" method="get">
+                <p>
+                    <button type="submit">Import a database from file</button>
+                </p>
+            </form>
         </div>
 
             {% with other_databases=student|databases_shared_with:course %}{% if other_databases.count %}

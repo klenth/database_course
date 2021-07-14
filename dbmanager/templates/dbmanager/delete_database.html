@@ -1,5 +1,23 @@
 {% extends 'base.html' %}
 
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_home' %}">Database manager</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_course_home' course_id=database.course.id %}">{{ database.course.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'database_details' db_name=database.name %}"><span class="database-name">{{ database.name }}</span></a>
+    </span>
+    <span class="breadcrumb">
+        Delete database
+    </span>
+{% endblock %}
+
 {% block content %}
 <div class="cards">
     <div class="card">
@@ -25,7 +43,7 @@
         <ul>
             {% for sdba in database.shared_with_students.all %}
                 <li>
-                    {{ sdba.student.first_name }} {{ sdba.student.last_name }}
+                    {{ sdba.student.name }}
                     {% if sdba.write_permission %}
                         (read/write)
                     {% else %}
@@ -40,9 +58,9 @@
         <p>
             <form action="{% url 'delete_database' db_name=database.name %}" method="post">
                 {% csrf_token %}
-                <input type="submit" class="delete-button" value="Yes, really delete">
+                <button type="submit" class="delete-button">Yes, really delete</button>
                 &nbsp;
-                <input type="button" value="Never mind" id="never-mind-button">
+                <button type="button" id="never-mind-button">Never mind</button>
             </form>
         </p>
 
