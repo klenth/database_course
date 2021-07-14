@@ -2,7 +2,10 @@
 
 {% block breadcrumbs %}
     <span class="breadcrumb">
-        <a href="{% url 'home' %}">Instructor home</a>
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'lab_home' %}">Labs</a>
     </span>
     <span class="breadcrumb">
         {{ course.title }}

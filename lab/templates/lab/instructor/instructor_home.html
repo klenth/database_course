@@ -3,6 +3,15 @@
 {% load static %}
 {% load custom_tags %}
 
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        Labs
+    </span>
+{% endblock %}
+
 {% block content %}
     <div class="cards">
         <div class="top card">
