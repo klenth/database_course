@@ -10,7 +10,7 @@ def instructor_home(request, instructor):
         'instructor': instructor,
     }
 
-    return render(request, 'instructor/instructor_home.html', context)
+    return render(request, 'lab/instructor/instructor_home.html', context)
 
 
 @auth_decorators.login_required
@@ -51,9 +51,9 @@ def edit_course(request, course_id=None):
         if not context['errors']:
             course.title = request.POST['title']
             course.save()
-            return redirect('home')
+            return redirect('lab_home')
 
-    return render(request, 'instructor/edit_course.html', context)
+    return render(request, 'lab/instructor/edit_course.html', context)
 
 
 @auth_decorators.login_required
@@ -90,9 +90,9 @@ def edit_lab(request, course_id, lab_id=None):
         if not context['errors']:
             lab.title = request.POST['title']
             lab.save()
-            return redirect('home')
+            return redirect('lab_home')
 
-    return render(request, 'instructor/edit_lab.html', context)
+    return render(request, 'lab/instructor/edit_lab.html', context)
 
 
 @auth_decorators.login_required
@@ -109,7 +109,7 @@ def view_lab(request, lab_id):
         'disabled_problems': lab.problems.filter(enabled=False),
     }
 
-    return render(request, 'instructor/view_lab.html', context)
+    return render(request, 'lab/instructor/view_lab.html', context)
 
 
 @auth_decorators.login_required
@@ -165,7 +165,7 @@ def enable_lab(request, lab_id, enabled=True):
     lab.enabled = enabled
     lab.save()
 
-    return redirect('home')
+    return redirect('lab_home')
 
 
 def disable_lab(request, lab_id):
@@ -203,7 +203,7 @@ def duplicate_lab(request, lab_id):
 
     new_lab = lab.duplicate()
 
-    return redirect('home')
+    return redirect('lab_home')
 
 
 @auth_decorators.login_required
@@ -238,7 +238,7 @@ def delete_lab(request, lab_id):
 
     lab.delete()
 
-    return redirect('home')
+    return redirect('lab_home')
 
 
 @csrf_decorators.ensure_csrf_cookie
@@ -254,7 +254,7 @@ def view_problem(request, problem_id):
         'problem': problem,
     }
 
-    return render(request, 'instructor/view_problem.html', context)
+    return render(request, 'lab/instructor/view_problem.html', context)
 
 
 @auth_decorators.login_required

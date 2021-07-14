@@ -21,7 +21,7 @@ def student_home(request, student):
     if student.is_dummy:
         context['alter_ego'] = student.alter_ego
 
-    return render(request, 'student/student_home.html', context)
+    return render(request, 'lab/student/student_home.html', context)
 
 
 @auth_decorators.login_required
@@ -44,7 +44,7 @@ def view_lab(request, lab_id):
     if student.is_dummy:
         context['alter_ego'] = student.alter_ego
 
-    return render(request, 'student/view_lab.html', context)
+    return render(request, 'lab/student/view_lab.html', context)
 
 
 @auth_decorators.login_required
@@ -87,4 +87,4 @@ def view_problem(request, problem_id, attempt_id=None):
         if student.is_dummy:
             context['alter_ego'] = student.alter_ego
 
-        return render(request, 'student/view_problem.html', context)
+        return render(request, 'lab/student/view_problem.html', context)

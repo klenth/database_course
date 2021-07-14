@@ -27,7 +27,7 @@ def home(request):
                 links.append({
                     'text': 'Lab',
                     'explanation': 'Work on assigned SQL labs',
-                    'href': course_settings.LAB_PREFIX + reverse('home', urlconf=lab_urlconf),
+                    'href': course_settings.LAB_PREFIX + reverse('lab_home', urlconf=lab_urlconf),
                 })
 
             if apps.is_installed('dbmanager') or True:
@@ -43,7 +43,7 @@ def home(request):
             'courses': courses_data,
         }
 
-        return render(request, 'student_home.html', context)
+        return render(request, 'course/student_home.html', context)
 
     maybe_instructor = Instructor.objects.filter(id=request.user.id)
     if maybe_instructor.exists():

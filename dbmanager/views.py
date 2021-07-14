@@ -46,7 +46,7 @@ def list_students(request):
         'students': Student.objects.exclude(is_dummy=True).order_by('username'),
     }
 
-    return render(request, 'list_students.html', context)
+    return render(request, 'dbmanager/list_students.html', context)
 
 
 def student_details(request, username):
@@ -81,7 +81,7 @@ def student_details(request, username):
         else:
             raise Http404
 
-    return render(request, 'student_details.html', context)
+    return render(request, 'dbmanager/student_details.html', context)
 
 
 def add_student(request):
@@ -119,7 +119,7 @@ def add_student(request):
         else:
             raise Http404
 
-    return render(request, 'add_student.html', {})
+    return render(request, 'dbmanager/add_student.html', {})
 
 
 @login_if_unauthenticated
@@ -139,7 +139,7 @@ def student_home(request):
             'student': student,
             'courses': courses,
         }
-        return render(request, 'student_home.html', context)
+        return render(request, 'dbmanager/student_home.html', context)
 
 
 @login_if_unauthenticated
@@ -184,7 +184,7 @@ def student_course_home(request, course_id):
         else:
             raise Http404
 
-    return render(request, 'student_course_home.html', context)
+    return render(request, 'dbmanager/student_course_home.html', context)
 
 
 def logout(request):
@@ -284,7 +284,7 @@ def database_details(request, db_name):
     already_shared_student_ids = list(db.other_students.values_list('id', flat=True)) + [db.owner.id]
     context['unshared_students'] = db.course.students.exclude(id__in=already_shared_student_ids)
 
-    return render(request, 'database_details.html', context)
+    return render(request, 'dbmanager/database_details.html', context)
 
 
 @login_if_unauthenticated
@@ -325,7 +325,7 @@ def view_profile(request, username=None):
         else:
             raise Http404
 
-    return render(request, 'view_profile.html', context)
+    return render(request, 'dbmanager/view_profile.html', context)
 
 
 @login_if_unauthenticated
@@ -348,7 +348,7 @@ def export_details(request, id, import_errors=None):
         'import_errors': import_errors
     }
 
-    return render(request, 'export_details.html', context)
+    return render(request, 'dbmanager/export_details.html', context)
 
 
 @login_if_unauthenticated
@@ -412,7 +412,7 @@ def delete_database(request, db_name):
     }
 
     if request.method == 'GET':
-        return render(request, 'delete_database.html', context)
+        return render(request, 'dbmanager/delete_database.html', context)
     elif request.method == 'POST':
         database.delete()
         if 'next' in request.POST:
@@ -476,7 +476,7 @@ def import_details(request, id):
         'import': dimport,
     }
 
-    return render(request, 'import_details.html', context)
+    return render(request, 'dbmanager/import_details.html', context)
 
 
 @login_if_unauthenticated
@@ -526,7 +526,7 @@ def import_upload(request):
                 dimport.initiate()
                 return redirect('import_details', id=dimport.id)
 
-    return render(request, 'import_upload.html', context)
+    return render(request, 'dbmanager/import_upload.html', context)
 
 
 @login_if_unauthenticated
@@ -539,7 +539,7 @@ def token_details(request, token_username):
         'token': token,
     }
 
-    return render(request, 'token_details.html', context)
+    return render(request, 'dbmanager/token_details.html', context)
 
 
 @login_if_unauthenticated
