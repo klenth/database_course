@@ -274,6 +274,10 @@ def database_details(request, db_name):
                         db.share_with(student, write_permission)
 
                 share_index += 1
+
+            if not context['change_share_errors']:
+                return redirect('database_details', db_name=db_name)
+
         else:
             raise Http404
 

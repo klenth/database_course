@@ -111,7 +111,7 @@ class DatabaseProxyUser(models.Model):
         with get_db() as db:
             cursor = db.cursor()
 
-            cursor.execute('''CREATE USER %s@'localhost' IDENTIFIED BY %s''',
+            cursor.execute('''CREATE USER IF NOT EXISTS %s@'localhost' IDENTIFIED BY %s''',
                            (proxy.username, proxy.password))
 
             for sdb in student.databases.all():
@@ -376,7 +376,6 @@ class DatabaseSnapshot(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     request_time = models.DateTimeField(auto_now_add=False, null=True, default=None)
     completion_time = models.DateTimeField(null=True, default=None)
-    course = models.ForeignKey(to=Course, null=False, on_delete=models.CASCADE)
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE, null=False, related_name='exports')
     database = models.ForeignKey(to=StudentDatabase, null=True, on_delete=models.SET_NULL, related_name='exports')
     database_name = models.CharField(max_length=StudentDatabase.MAX_NAME_LENGTH, null=False, default='')

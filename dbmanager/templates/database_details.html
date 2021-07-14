@@ -123,7 +123,7 @@
                         (none)
                     {% endfor %}</td>
                 {% endcomment %}
-                <td>{{ database.other_students.all|except:student|map:"get_full_name"|join:", " }}</td>
+                <td>{{ database.other_students.all|except:student|map:"name"|join:", " }}</td>
             </tr>
         {% endif %}
         </table>
@@ -160,7 +160,7 @@
                                     <label for="access_{{ forloop.counter0 }}_rw_box">read/write</label>
                                 </td>
                                 <td>
-                                    {{ sdba.student.get_full_name }}
+                                    {{ sdba.student.name }}
                                     <input type="hidden" name="access_{{ forloop.counter0 }}_student" value="{{ sdba.student.username }}">
                                 </td>
                                 <td>
@@ -223,7 +223,7 @@
 
     const STUDENTS = {
         {% for student in unshared_students %}
-            "{{ student.username }}": '{{ student.get_full_name|safe }}'{% if not forloop.last %},{% endif %}
+            "{{ student.username }}": '{{ student.name|safe }}'{% if not forloop.last %},{% endif %}
         {% endfor %}
     };
 

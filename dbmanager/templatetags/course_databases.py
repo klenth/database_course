@@ -6,7 +6,7 @@ register = template.Library()
 @register.filter(name='exports')
 def student_exports(student, course=None):
     if course:
-        return student.exports.filter(course=course)
+        return student.exports.filter(database__course=course)
     else:
         return student.exports.all()
 

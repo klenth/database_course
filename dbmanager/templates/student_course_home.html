@@ -79,7 +79,7 @@
             <p><a href="{% url 'import_upload' %}">Import a database from file</a></p>
         </div>
 
-            {% if other_databases.count %}
+            {% with other_databases=student|databases_shared_with:course %}{% if other_databases.count %}
                 <div class="card">
                     <div class="title">Databases shared with me</div>
                     <table id="other-databases">
@@ -105,9 +105,9 @@
                         {% endwith %}{% endfor %}
                     </table>
                 </div>
-            {% endif %}
+            {% endif %}{% endwith %}
 
-            {% if exports.count %}
+            {% with exports=student|exports:course %}{% if exports.count %}
                 <div class="card">
                     <div class="title">Database snapshots</div>
                     <table id="exports">
@@ -152,7 +152,7 @@
                         {% endfor %}
                     </table>
                 </div>
-            {% endif %}
+            {% endif %}{% endwith %}
         </div>
     </div>
 {% endblock %}
