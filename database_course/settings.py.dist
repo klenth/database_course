@@ -136,3 +136,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CLASS_TIMEZONE = 'US/Mountain'
 
 LOGIN_URL = '/accounts/login/'
+
+LAB_PREFIX = 'lab'
+DBMANAGER_PREFIX = 'databases'

@@ -5,6 +5,8 @@ from django.shortcuts import reverse
 from .models import *
 from lab import urls as lab_urlconf
 from dbmanager import urls as dbmanager_urlconf
+from database_course import settings as course_settings
+
 
 @login_required
 def home(request):
@@ -25,14 +27,14 @@ def home(request):
                 links.append({
                     'text': 'Lab',
                     'explanation': 'Work on assigned SQL labs',
-                    'href': 'lab' + reverse('home', urlconf=lab_urlconf),
+                    'href': course_settings.LAB_PREFIX + reverse('home', urlconf=lab_urlconf),
                 })
 
             if apps.is_installed('dbmanager') or True:
                 links.append({
                     'text': 'Database manager',
                     'explanation': 'Create and manage your databases on the class database server',
-                    'href': 'databases' + reverse('student_course_home', urlconf=dbmanager_urlconf, kwargs={'course_id': course.id }),
+                    'href': course_settings.DBMANAGER_PREFIX + reverse('student_course_home', urlconf=dbmanager_urlconf, kwargs={'course_id': course.id }),
                 })
 
             courses_data.append(course_data)
