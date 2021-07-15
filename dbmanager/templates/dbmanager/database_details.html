@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'dbmanager/base.html' %}
 {% load functional %}
 
 {% block breadcrumbs %}
@@ -59,7 +59,7 @@
 
         <div class="title">Database <span class="database-name">{{ database.name }}</span></div>
         {% if is_shared %}
-            <h4>Owned by {{ database.owner.first_name }} {{ database.owner.last_name }}
+            <h4>Owned by {{ database.owner.name }}
                 {% if is_readonly %}
                     (read-only access)
                 {% else %}

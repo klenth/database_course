@@ -94,13 +94,13 @@
                             <div class="display-toggleable"><div class="test-case-data">
                                 <div class="correct data">
                                     <div class="caption">Expected</div>
-                                    <table>
+                                    <table class="highlight-alternating-rows">
                                         {{ correct_data|datatable }}
                                     </table>
                                 </div>
                                 <div class="student data">
                                     <div class="caption">Your result</div>
-                                    <table>
+                                    <table class="highlight-alternating-rows">
                                         {{ student_data|datatable:correct_data }}
                                     </table>
                                 </div>
