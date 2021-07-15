@@ -2,6 +2,7 @@
 {% load humanize %}
 {% load functional %}
 {% load course_databases %}
+{% load custom_tags %}
 
 {% block breadcrumbs %}
     <span class="breadcrumb">
@@ -36,7 +37,8 @@
                                     <a href="{% url 'database_details' db_name=database.name %}" class="database-name">{{ database.name }}</a>
                                 </td>
                                 <td>
-                                    {{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}
+                                    {% comment %}{{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}{% endcomment %}
+                                    {{ database.created|friendlytime }}
                                 </td>
                                 <td>
                                     {% if database.is_deleted %}
@@ -57,7 +59,8 @@
                                     <a href="{% url 'database_details' db_name=new_db.name %}" class="database-name">{{ new_db.name }}</a>
                                 </td>
                                 <td>
-                                    {{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}
+                                    {% comment %}{{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}{% endcomment %}
+                                    {{ database.created|friendlytime }}
                                 </td>
                                 <td>
                                     <!-- Newly-created database - should have no tables -->
@@ -72,24 +75,38 @@
                     (None)
                 {% endif %}
             {% endwith %}
+        </div>
 
-            <h2>Add database</h2>
+        <div class="card">
+            <div class="title">New database</div>
+            <h3>Empty database</h3>
             <p>
-                <form action="{% url 'student_course_home' course_id=course.id %}" method="post">
+                Create a new, empty database on the server for your use.
+            </p>
+            <form action="{% url 'student_course_home' course_id=course.id %}" method="post">
+                <p class="indented">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="new_database">
-                    <label for="database_name_box">New database:</label> &nbsp;&nbsp;
+                    <label for="database_name_box">Name:</label> &nbsp;&nbsp;
                     <label for="database_name_box" class="database-name">{{ student.username }}_</label><input type="text" size="20" maxlength="{{ max_db_name_length }}" id="database_name_box" name="database_name" class="database-name" pattern="[a-zA-Z_][a-zA-Z0-9_]*">
-                    <input type="submit" value="Create">
-                </form>
+                </p>
+                <p class="indented">
+                    <button type="submit">Create</button>
+                </p>
+            </form>
                 <ul class="error">
                     {% for error in new_db_errors %}
                         <li>{{ error }}</li>
                     {% endfor %}
                 </ul>
+
+            <h3>From uploaded file</h3>
+            <p>
+                Create a new database on the server and populate it with the tables from an uploaded .sql file. This
+                file should contain SQL code (<code>CREATE TABLE</code> and <code>INSERT</code> statements and so on).
             </p>
             <form action="{% url 'import_upload' course_id=course.id %}" method="get">
-                <p>
+                <p class="indented">
                     <button type="submit">Import a database from file</button>
                 </p>
             </form>
@@ -109,14 +126,17 @@
                         {% for sdba in other_databases %}{% with database=sdba.database %}
                             <tr {% if database.is_deleted %}class="deleted"{% endif %}>
                                 <td><a href="{% url 'database_details' db_name=database.name %}" class="database-name">{{ database.name }}</a></td>
-                                <td>{{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}</td>
+                                <td>
+                                    {% comment %}{{ database.created|date:'M jS' }}, {{ database.created|time:'g:i A'|lower }}{% endcomment %}
+                                    {{ database.created|friendlytime }}
+                                </td>
                                 <td>{% if database.is_deleted %}
                                         (Database has been deleted externally.<br>There is still a record of it in this web app but any tables it once contained are gone.)
                                     {% else %}
                                         {{ database.get_table_names_safe|join:", "|truncatechars:100 }}
                                     {% endif %}</td>
                                 <td>{% if sdba.write_permission %}read/write{% else %}read-only{% endif %}</td>
-                                <td>{{ database.other_students.all|except:student|map:"get_full_name"|join:", "|default:"(none)"|truncatechars:100 }}</td>
+                                <td>{{ database.other_students.all|except:student|map:"name"|join:", "|default:"(none)"|truncatechars:100 }}</td>
                             </tr>
                         {% endwith %}{% endfor %}
                     </table>
@@ -135,7 +155,7 @@
                         </tr>
                         {% for export in exports %}
                             <tr>
-                                <td>{{ export.request_time }}</td>
+                                <td>{{ export.request_time|friendlytime }}</td>
                                 <td>
                                     {% if export.database %}
                                         <a href="{% url 'database_details' db_name=export.database.name %}" class="database-name">{{ export.database.name }}</a>

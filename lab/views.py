@@ -4,7 +4,6 @@ import django.contrib.auth.decorators as auth_decorators
 from .models import *
 from . import instructor_views, student_views
 from django.utils import timezone
-import datetime
 
 
 @auth_decorators.login_required
