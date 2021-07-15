@@ -37,9 +37,9 @@
             </ul>
 
             {% if lab %}
-                <form action="{% url 'instructor_edit_lab' course_id=course.id lab_id=lab.id %}" method="post">
+                <form action="{% url 'instructor_edit_lab' course_handle=course.handle lab_id=lab.id %}" method="post">
             {% else %}
-                <form action="{% url 'instructor_new_lab' course_id=course.id %}" method="post">
+                <form action="{% url 'instructor_new_lab' course_handle=course.handle %}" method="post">
             {% endif %}
             {% csrf_token %}
             <table>

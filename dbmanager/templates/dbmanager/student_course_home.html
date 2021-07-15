@@ -87,7 +87,7 @@
                 <p>
                     Create a new, empty database on the server for your use.
                 </p>
-                <form action="{% url 'student_course_home' course_id=course.id %}" method="post">
+                <form action="{% url 'student_course_home' course_handle=course.handle %}" method="post">
                     <p class="indented">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="new_database">
@@ -109,7 +109,7 @@
                     Create a new database on the server and populate it with the tables from an uploaded .sql file. This
                     file should contain SQL code (<code>CREATE TABLE</code> and <code>INSERT</code> statements and so on).
                 </p>
-                <form action="{% url 'import_upload' course_id=course.id %}" method="get">
+                <form action="{% url 'import_upload' course_handle=course.handle %}" method="get">
                     <p class="indented">
                         <button type="submit">Import a database from file</button>
                     </p>

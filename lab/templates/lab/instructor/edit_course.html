@@ -34,7 +34,7 @@
             </ul>
 
             {% if course %}
-                <form action="{% url 'instructor_edit_course' course_id=course.id %}" method="post">
+                <form action="{% url 'instructor_edit_course' course_handle=course.handle %}" method="post">
             {% else %}
                 <form action="{% url 'instructor_new_course' %}" method="post">
             {% endif %}

@@ -9,7 +9,7 @@
         <a href="{% url 'student_home' %}">Database manager</a>
     </span>
     <span class="breadcrumb">
-        <a href="{% url 'student_course_home' course_id=database.course.id %}">{{ database.course.title }}</a>
+        <a href="{% url 'student_course_home' course_handle=database.course.handle %}">{{ database.course.title }}</a>
     </span>
     <span class="breadcrumb">
         <span class="database-name">{{ database.name }}</span>
@@ -225,7 +225,7 @@
         {% endif %}
 
         <p>
-            Back to <a href="{% url 'student_course_home' course_id=database.course.id %}">my databases</a>
+            Back to <a href="{% url 'student_course_home' course_handle=database.course.handle %}">my databases</a>
         </p>
     </div>
 </div>

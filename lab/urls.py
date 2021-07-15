@@ -12,9 +12,9 @@ urlpatterns = [
 
     path('i/student', instructor_views.dummy_home, name='instructor_dummy_home'),
     path('i/course/new', instructor_views.edit_course, name='instructor_new_course'),
-    path('i/course/<uuid:course_id>/edit', instructor_views.edit_course, name='instructor_edit_course'),
-    path('i/c/<uuid:course_id>/lab/new', instructor_views.edit_lab, name='instructor_new_lab'),
-    path('i/c/<uuid:course_id>/lab/<uuid:lab_id>/edit', instructor_views.edit_lab, name='instructor_edit_lab'),
+    path('i/course/<slug:course_handle>/edit', instructor_views.edit_course, name='instructor_edit_course'),
+    path('i/c/<slug:course_handle>/lab/new', instructor_views.edit_lab, name='instructor_new_lab'),
+    path('i/c/<slug:course_handle>/lab/<uuid:lab_id>/edit', instructor_views.edit_lab, name='instructor_edit_lab'),
     path('i/lab/<uuid:lab_id>', instructor_views.view_lab, name='instructor_view_lab'),
     path('i/lab/<uuid:lab_id>/new_problem', instructor_views.new_problem, name='instructor_new_problem'),
     path('i/lab/p/<uuid:problem_id>', instructor_views.view_problem, name='instructor_view_problem'),

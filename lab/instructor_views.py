@@ -21,8 +21,8 @@ def dummy_home(request):
 
 
 @auth_decorators.login_required
-def edit_course(request, course_id=None):
-    course = get_object_or_404(Course, pk=course_id) if course_id else None
+def edit_course(request, course_handle=None):
+    course = get_object_or_404(Course, handle=course_handle) if course_handle else None
     instructor = get_object_or_404(Instructor, id=request.user.id)
     if course and course.instructor != instructor:
         raise Http404
@@ -57,8 +57,8 @@ def edit_course(request, course_id=None):
 
 
 @auth_decorators.login_required
-def edit_lab(request, course_id, lab_id=None):
-    course = get_object_or_404(Course, pk=course_id)
+def edit_lab(request, course_handle, lab_id=None):
+    course = get_object_or_404(Course, handle=course_handle)
     lab = get_object_or_404(Lab, pk=lab_id) if lab_id else None
     instructor = get_object_or_404(Instructor, id=request.user.id)
     if course.instructor != instructor \

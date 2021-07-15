@@ -10,7 +10,7 @@
         <a href="{% url 'student_home' %}">Database manager</a>
     </span>
     <span class="breadcrumb">
-        <a href="{% url 'student_course_home' course_id=export.database.course.id %}">{{ export.database.course.title }}</a>
+        <a href="{% url 'student_course_home' course_handle=export.database.course.handle %}">{{ export.database.course.title }}</a>
     </span>
     {% if export.database %}
         <span class="breadcrumb">

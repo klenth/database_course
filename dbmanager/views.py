@@ -133,7 +133,7 @@ def student_home(request):
 
     courses = Course.objects.filter(enrollment__student=student, enrollment__active=True)
     if len(courses) == 1:
-        return redirect('student_course_home', course_id=courses.get().id)
+        return redirect('student_course_home', course_handle=courses.get().handle)
     else:
         context = {
             'student': student,
@@ -143,8 +143,8 @@ def student_home(request):
 
 
 @login_if_unauthenticated
-def student_course_home(request, course_id):
-    course = get_object_or_404(Course, id=course_id)
+def student_course_home(request, course_handle):
+    course = get_object_or_404(Course, handle=course_handle)
     student_query = Student.objects.filter(id=request.user.id)
 
     student = student_query.get() if student_query.exists() else None
@@ -176,7 +176,7 @@ def student_course_home(request, course_id):
                 elif StudentDatabase.is_valid_name(db_name):
                     # context['new_db'] = student.create_database(db_name)
                     context['new_db'] = StudentDatabase.create(student, course, db_name)
-                    return redirect('student_course_home', course_id=course.id)
+                    return redirect('student_course_home', course_handle=course.handle)
                 else:
                     context['new_db_errors'].append("Invalid database name: {} (database names can be up to {} characters long and may be composed of only letters, digits, and underscores)".format(db_name, StudentDatabase.MAX_NAME_LENGTH))
             else:
@@ -405,7 +405,7 @@ def delete_export(request, id):
         if db_name:
             return redirect('database_details', db_name=export.database.name)
         else:
-            return redirect('student_course_home', course_id=course.id)
+            return redirect('student_course_home', course_handle=course.handle)
 
 
 @login_if_unauthenticated
@@ -426,7 +426,7 @@ def delete_database(request, db_name):
         if 'next' in request.POST:
             return HttpResponseRedirect(request.POST['next'])
         else:
-            return redirect('student_course_home', course_id=course.id)
+            return redirect('student_course_home', course_handle=course.handle)
 
 
 @login_if_unauthenticated
@@ -488,13 +488,13 @@ def import_details(request, id):
 
 
 @login_if_unauthenticated
-def import_upload(request, course_id):
+def import_upload(request, course_handle):
     #if request.user.is_superuser:
     #    student = None
     #    databases = StudentDatabase.objects.order_by('owner__username', 'name')
     #else:
     student = get_object_or_404(Student, id=request.user.id)
-    course = get_object_or_404(Course, pk=course_id)
+    course = get_object_or_404(Course, handle=course_handle)
     databases = StudentDatabase.objects.filter(owner=student, course=course)
 
     context = {

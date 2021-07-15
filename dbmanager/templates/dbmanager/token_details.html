@@ -8,7 +8,7 @@
         <a href="{% url 'student_home' %}">Database manager</a>
     </span>
     <span class="breadcrumb">
-        <a href="{% url 'student_course_home' course_id=token.database.course.id %}">{{ token.database.course.title }}</a>
+        <a href="{% url 'student_course_home' course_handle=token.database.course.handle %}">{{ token.database.course.title }}</a>
     </span>
     <span class="breadcrumb">
         <a href="{% url 'database_details' db_name=token.database.name %}"><span class="database-name">{{ token.database.name }}</span></a>

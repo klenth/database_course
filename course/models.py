@@ -102,6 +102,7 @@ class DummyStudent(Student):
 class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid1)
     title = models.CharField(max_length=80, null=False, blank=False)
+    handle = models.SlugField(max_length=30, null=False, blank=False, unique=True)
     instructor = models.ForeignKey(to=Instructor, null=False, on_delete=models.RESTRICT, related_name='courses')
     students = models.ManyToManyField(to=Student, through='Enrollment', related_name='+')
 

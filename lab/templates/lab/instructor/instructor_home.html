@@ -98,11 +98,11 @@
                 {% endwith %}
 
                 <section class="right">
-                    <form action="{% url 'instructor_edit_course' course_id=course.id %}" method="get" style="display: inline-block;">
+                    <form action="{% url 'instructor_edit_course' course_handle=course.handle %}" method="get" style="display: inline-block;">
                         <button>Edit course</button>
                     </form>
                     <div class="spacer"></div>
-                    <form action="{% url 'instructor_new_lab' course_id=course.id %}" method="get" style="display: inline-block;">
+                    <form action="{% url 'instructor_new_lab' course_handle=course.handle %}" method="get" style="display: inline-block;">
                         <button>New lab</button>
                     </form>
                 </section>

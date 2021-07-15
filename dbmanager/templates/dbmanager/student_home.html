@@ -16,7 +16,7 @@
         <div class="title">Active courses</div>
         <ul>
             {% for course in courses %}
-                <li><a href="{% url 'student_course_home' course_id=course.id %}">{{ course.title }}</a></li>
+                <li><a href="{% url 'student_course_home' course_handle=course.handle %}">{{ course.title }}</a></li>
             {% empty %}
                 You do not have any active courses.
             {% endfor %}

@@ -10,7 +10,7 @@
         <a href="{% url 'student_home' %}">Database manager</a>
     </span>
     <span class="breadcrumb">
-        <a href="{% url 'student_course_home' course_id=import.course.id %}">{{ import.course.title }}</a>
+        <a href="{% url 'student_course_home' course_handle=import.course.handle %}">{{ import.course.title }}</a>
     </span>
     {% if import.source_export %}
         <span class="breadcrumb">

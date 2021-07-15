@@ -34,7 +34,7 @@ def home(request):
                 links.append({
                     'text': 'Database manager',
                     'explanation': 'Create and manage your databases on the class database server',
-                    'href': course_settings.DBMANAGER_PREFIX + reverse('student_course_home', urlconf=dbmanager_urlconf, kwargs={'course_id': course.id }),
+                    'href': course_settings.DBMANAGER_PREFIX + reverse('student_course_home', urlconf=dbmanager_urlconf, kwargs={'course_handle': course.handle}),
                 })
 
             courses_data.append(course_data)

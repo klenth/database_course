@@ -30,7 +30,7 @@ urlpatterns = [
     path('profile/<slug:username>', views.view_profile, name='view_profile'),
     path('profile', views.view_profile, name='view_profile'),
     path('', views.student_home, name='student_home'),
-    path('course/<uuid:course_id>', views.student_course_home, name='student_course_home'),
+    path('course/<slug:course_handle>', views.student_course_home, name='student_course_home'),
     path('login', views.login, name='login'),
     path('logout', views.logout, name='logout'),
 
@@ -40,6 +40,6 @@ urlpatterns = [
     path('export/<uuid:id>/delete', views.delete_export, name='delete_export'),
     path('export/<uuid:export_id>/import', views.import_export, name='import_export'),
     path('import/<uuid:id>', views.import_details, name='import_details'),
-    path('course/<uuid:course_id>/import', views.import_upload, name='import_upload'),
+    path('course/<slug:course_handle>/import', views.import_upload, name='import_upload'),
 ]
 
