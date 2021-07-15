@@ -37,18 +37,27 @@ def setup_account(request, link_id):
 
         errors = []
 
+        # Validate name
         if not name:
             errors.append('You must specify a name')
+
+        # Validate email
         if not email:
             errors.append('You must specify an email address')
         elif '@' not in email:
             errors.append('Email address must contain an "@"')
+
+        # Validate username
         if not username:
             errors.append('You must specify a username')
+        elif '/' in username:
+            errors.append('Invalid username')
         else:
             clashing_person = User.objects.filter(username=username).exclude(id=student.id)
             if clashing_person.exists():
                 errors.append('That username is already taken; please choose another')
+
+        # Validate password
         if not password1 or not password2:
             errors.append('You must specify a password')
         elif password1 != password2:
