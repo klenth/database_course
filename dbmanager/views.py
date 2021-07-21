@@ -5,6 +5,7 @@ import re
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.utils import timezone
+from course.models import *
 
 
 def login_if_unauthenticated(to=None):
@@ -38,12 +39,14 @@ def login_if_unauthenticated(to=None):
         return delegate
 
 
-def list_students(request):
+def list_students(request, course_handle):
     if not request.user.is_superuser:
         raise Http404
+    course = get_object_or_404(Course, handle=course_handle)
 
     context = {
-        'students': Student.objects.exclude(is_dummy=True).order_by('username'),
+        'course': course,
+        'students': course.students.exclude(is_dummy=True).order_by('username'),
     }
 
     return render(request, 'dbmanager/list_students.html', context)
@@ -84,48 +87,54 @@ def student_details(request, username):
     return render(request, 'dbmanager/student_details.html', context)
 
 
-def add_student(request):
-    if not request.user.is_superuser:
-        raise Http404
-
-    context = {
-        'errors': []
-    }
-
-    if request.method == 'POST':
-        if 'username' in request.POST and request.POST['username'] \
-                and 'password' in request.POST and request.POST['password']:
-            username = request.POST['username']
-            password = request.POST['password']
-
-            valid_username_pattern = re.compile(r'^[\d\w_\-]+$')
-            if not valid_username_pattern.match(username) or len(username) > Student.MAX_USERNAME_LENGTH:
-                context['errors'].append('Invalid username')
-
-            student = Student.create(username=username, password=password)
-            if 'first_name' in request.POST and request.POST['first_name']:
-                student.first_name = request.POST['first_name']
-            if 'last_name' in request.POST and request.POST['last_name']:
-                student.last_name = request.POST['last_name']
-            if 'student_id' in request.POST and request.POST['student_id']:
-                student.student_id = request.POST['student_id']
-            if 'email' in request.POST and request.POST['email']:
-                student.email = request.POST['email']
-
-            student.save()
-
-            if 'next' in request.POST and request.POST['next']:
-                return redirect(request.POST['next'])
-        else:
-            raise Http404
-
-    return render(request, 'dbmanager/add_student.html', {})
+# @login_if_unauthenticated
+# def add_student(request, course_handle):
+#     instructor = get_object_or_404(Instructor, id=request.user.id)
+#     course = get_object_or_404(Course, handle=course_handle)
+#
+#     if course.instructor.id != instructor.id:
+#         raise Http404
+#
+#     context = {
+#         'course': course,
+#         'errors': []
+#     }
+#
+#     if request.method == 'POST':
+#         if 'username' in request.POST and request.POST['username'] \
+#                 and 'password' in request.POST and request.POST['password']:
+#             username = request.POST['username']
+#             password = request.POST['password']
+#
+#             valid_username_pattern = re.compile(r'^[\d\w_\-]+$')
+#             if not valid_username_pattern.match(username) or len(username) > Student.MAX_USERNAME_LENGTH:
+#                 context['errors'].append('Invalid username')
+#
+#             student = Student.create(username=username, password=password)
+#             if 'first_name' in request.POST and request.POST['first_name']:
+#                 student.first_name = request.POST['first_name']
+#             if 'last_name' in request.POST and request.POST['last_name']:
+#                 student.last_name = request.POST['last_name']
+#             if 'student_id' in request.POST and request.POST['student_id']:
+#                 student.student_id = request.POST['student_id']
+#             if 'email' in request.POST and request.POST['email']:
+#                 student.email = request.POST['email']
+#
+#             student.save()
+#
+#             if 'next' in request.POST and request.POST['next']:
+#                 return redirect(request.POST['next'])
+#         else:
+#             raise Http404
+#
+#     return render(request, 'dbmanager/add_student.html', {})
 
 
 @login_if_unauthenticated
 def student_home(request):
-    if request.user.is_superuser:
-        return redirect('list_students')
+    maybe_instructor = Instructor.objects.filter(id=request.user.id)
+    if maybe_instructor.exists():
+        return instructor_home(request)
 
     #student_query = Student.objects.filter(id=request.user.id)
     #student = student_query.get() if student_query.exists() else None
@@ -140,6 +149,17 @@ def student_home(request):
             'courses': courses,
         }
         return render(request, 'dbmanager/student_home.html', context)
+
+
+@login_if_unauthenticated
+def instructor_home(request):
+    instructor = get_object_or_404(Instructor, id=request.user.id)
+
+    context = {
+        'courses': Course.objects.filter(instructor=instructor)
+    }
+
+    return render(request, 'dbmanager/instructor_home.html', context)
 
 
 @login_if_unauthenticated

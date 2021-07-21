@@ -19,9 +19,9 @@ from . import views
 
 urlpatterns = [
 #    path('admin/', admin.site.urls),
-    path('students', views.list_students, name='list_students'),
+    path('course/<slug:course_handle>/students', views.list_students, name='list_students'),
     path('student/<slug:username>', views.student_details, name='student_details'),
-    path('students/add', views.add_student, name='add_student'),
+#    path('course/<slug:course_handle>/students/add', views.add_student, name='add_student'),
     path('database/<slug:db_name>', views.database_details, name='database_details'),
     path('database/<slug:db_name>/delete', views.delete_database, name='delete_database'),
     path('database/<slug:db_name>/create_token', views.create_token, name='create_token'),

@@ -4,6 +4,16 @@
 <div class="cards">
     <div class="card">
         <div class="title">Home</div>
+        <dl>
+            {% for link in links %}
+                <dt>
+                    <a href="{{ link.href }}">{{ link.text }}</a>
+                </dt>
+                <dd>
+                    {{ link.explanation }}
+                </dd>
+            {% endfor %}
+        </dl>
     </div>
 </div>
 {% endblock %}

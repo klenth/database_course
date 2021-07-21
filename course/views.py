@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.apps import apps
+from django.http import Http404
 from django.shortcuts import reverse
 from .models import *
 from lab import urls as lab_urlconf
@@ -48,4 +49,26 @@ def home(request):
     maybe_instructor = Instructor.objects.filter(id=request.user.id)
     if maybe_instructor.exists():
         instructor = maybe_instructor.get()
-        raise Http404
+        links = []
+
+        if apps.is_installed('lab'):
+            links.append({
+                'text': 'SQL Lab',
+                'explanation': 'SQL lab platform',
+                'href': course_settings.LAB_PREFIX + reverse('lab_home', urlconf=lab_urlconf)
+            })
+
+        if apps.is_installed('dbmanager'):
+            links.append({
+                'text': 'Database manager',
+                'explanation': 'Manage student databases',
+                'href': course_settings.DBMANAGER_PREFIX + reverse('student_home', urlconf=dbmanager_urlconf)
+            })
+
+        context = {
+            'links': links,
+        }
+
+        return render(request, 'course/instructor_home.html', context)
+
+    raise Http404

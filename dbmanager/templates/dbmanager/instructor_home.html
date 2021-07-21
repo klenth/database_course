@@ -5,23 +5,19 @@
         <a href="{% url 'home' %}">Home</a>
     </span>
     <span class="breadcrumb">
-        {{ course.title }}
-    </span>
-    <span class="breadcrumb">
-        Students
+        Database manager
     </span>
 {% endblock %}
 
 {% block content %}
 <div class="cards">
     <div class="card">
-        <div class="title">Students</div>
+        <div class="title">Courses</div>
         <ul>
-            {% for student in students %}
-                <li><a href="{% url 'student_details' username=student.username %}">{{ student.username }}</a></li>
+            {% for course in courses %}
+                <li><a href="{% url 'list_students' course_handle=course.handle %}">{{ course.title }}</a></li>
             {% endfor %}
         </ul>
-
     </div>
 </div>
 {% endblock %}

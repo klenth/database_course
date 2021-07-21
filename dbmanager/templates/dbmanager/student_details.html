@@ -1,33 +1,38 @@
 {% extends 'dbmanager/base.html' %}
 
 {% block content %}
-    <h1>Student: {{ student.username }}</h1>
-    <h2>Owned databases</h2>
-    <ul>
-        {% for db in student_dbs %}
-            <li><a href="{% url 'database_details' db_name=db.name %}" class="database-name">{{ db.name }}</a></li>
-        {% empty %}
-            (none)
-        {% endfor %}
-        {% if created_db_error %}
-            <div class="error">{{ created_db_error }}</div>
-        {% endif %}
-    </ul>
-    <p>
-        <form action="{% url 'student_details' username=student.username %}" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="new_database">
-            <label for="db_name_box">Add new database: </label>
-            <input type="text" id="db_name_box" name="db_name" size="20" value="{{ student.username }}_" class="database-name">
-            <input type="submit">
-        </form>
-    </p>
-    <h2>Shared databases</h2>
-    <ol>
-        {% for db in other_dbs %}
-            <li><span class="database-name">{{ db.name }}</span></li>
-        {% empty %}
-            (none)
-        {% endfor %}
-    </ol>
+<div class="cards">
+    <div class="card">
+        <div class="title">Student: {{ student.username }}</div>
+        <h2>Owned databases</h2>
+        <ul>
+            {% for db in student_dbs %}
+                <li><a href="{% url 'database_details' db_name=db.name %}" class="database-name">{{ db.name }}</a></li>
+            {% empty %}
+                (none)
+            {% endfor %}
+            {% if created_db_error %}
+                <div class="error">{{ created_db_error }}</div>
+            {% endif %}
+        </ul>
+        <p>
+            <form action="{% url 'student_details' username=student.username %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="new_database">
+                <label for="db_name_box">Add new database: </label>
+                <input type="text" id="db_name_box" name="db_name" size="20" value="{{ student.username }}_" class="database-name">
+                <input type="submit">
+            </form>
+        </p>
+        <h2>Shared databases</h2>
+        <ol>
+            {% for db in other_dbs %}
+                <li><span class="database-name">{{ db.name }}</span></li>
+            {% empty %}
+                (none)
+            {% endfor %}
+        </ol>
+
+    </div>
+</div>
 {% endblock %}

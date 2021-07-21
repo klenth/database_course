@@ -1,66 +1,71 @@
 {% extends 'dbmanager/base.html' %}
 
 {% block content %}
-    <h1>Add student</h1>
-    <form action="{% url 'add_student' %}" method="POST">
-        {% csrf_token %}
-        <input type="hidden" id="next_field" name="next" value="{% url 'list_students' %}">
-        <table>
-            <tr>
-                <th scope="row"><label for="username_box">Username:</label></th>
-                <td><input type="text" id="username_box" name="username" size="20"></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="password_box">Password:</label></th>
-                <td><input type="text" id="password_box" name="password" size="20"></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="first_name_box">First name:</label></th>
-                <td><input type="text" id="first_name_box" name="first_name" size="20"></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="last_name_box">Last name:</label></th>
-                <td><input type="text" id="last_name_box" name="last_name" size="20"></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="student_id_box">Student ID:</label></th>
-                <td><input type="text" id="student_id_box" name="student_id" size="20"></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="email_box">E-mail:</label></th>
-                <td><input type="text" id="email_box" name="email" size="20"></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td><input type="submit" value="Add one"> &nbsp;
-                    <input type="submit" id="add_another_button" value="Add another"></td>
-            </tr>
-        </table>
-    </form>
+<div class="cards">
+    <div class="card">
+        <div class="title">Add student</div>
+        <form action="{% url 'add_student' course_handle=course.handle %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" id="next_field" name="next" value="{% url 'list_students' %}">
+            <table>
+                <tr>
+                    <th scope="row"><label for="username_box">Username:</label></th>
+                    <td><input type="text" id="username_box" name="username" size="20"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="password_box">Password:</label></th>
+                    <td><input type="text" id="password_box" name="password" size="20"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="first_name_box">First name:</label></th>
+                    <td><input type="text" id="first_name_box" name="first_name" size="20"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="last_name_box">Last name:</label></th>
+                    <td><input type="text" id="last_name_box" name="last_name" size="20"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="student_id_box">Student ID:</label></th>
+                    <td><input type="text" id="student_id_box" name="student_id" size="20"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="email_box">E-mail:</label></th>
+                    <td><input type="text" id="email_box" name="email" size="20"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input type="submit" value="Add one"> &nbsp;
+                        <input type="submit" id="add_another_button" value="Add another"></td>
+                </tr>
+            </table>
+        </form>
 
-    <script>
-        "use strict";
+    </div>
+</div>
 
-        (function() {
-            function $(sel) {
-                return document.querySelector(sel);
+<script>
+    "use strict";
+
+    (function() {
+        function $(sel) {
+            return document.querySelector(sel);
+        }
+
+        let email_overridden = false;
+        $("#username_box").addEventListener("input", function(e) {
+            if (!email_overridden) {
+                let username = e.target.value;
+                $("#email_box").value = username ? (username + "@westminstercollege.edu") : "";
             }
+        });
 
-            let email_overridden = false;
-            $("#username_box").addEventListener("input", function(e) {
-                if (!email_overridden) {
-                    let username = e.target.value;
-                    $("#email_box").value = username ? (username + "@westminstercollege.edu") : "";
-                }
-            });
+        $("#email_box").addEventListener("input", function() {
+            email_overridden = true;
+        });
 
-            $("#email_box").addEventListener("input", function() {
-                email_overridden = true;
-            });
-
-            $("#add_another_button").addEventListener("click", function() {
-                $("#next_field").value = "{% url 'add_student' %}";
-            });
-        })();
-    </script>
+        $("#add_another_button").addEventListener("click", function() {
+            $("#next_field").value = "{% url 'add_student' %}";
+        });
+    })();
+</script>
 {% endblock %}
