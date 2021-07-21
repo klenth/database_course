@@ -22,12 +22,6 @@
     </span>
 {% endblock %}
 
-{% block alter_ego %}
-    {% if alter_ego %}
-        Acting as a student. <a href="{% url 'instructor_view_problem' problem_id=problem.id %}">Return to instructor view</a>
-    {% endif %}
-{% endblock %}
-
 {% block content %}
     <div class="cards">
         <div class="card">

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.http import Http404
 import django.contrib.auth.decorators as auth_decorators
 from .models import *
@@ -18,8 +18,8 @@ def student_home(request, student):
         'courses': student.courses(),
     }
 
-    if student.is_dummy:
-        context['alter_ego'] = student.alter_ego
+    # if student.is_dummy:
+    #     context['alter_ego'] = student.alter_ego
 
     return render(request, 'lab/student/student_home.html', context)
 
@@ -42,7 +42,7 @@ def view_lab(request, lab_id):
     }
 
     if student.is_dummy:
-        context['alter_ego'] = student.alter_ego
+        context['instructor_href'] = reverse('instructor_view_lab', kwargs={'lab_id': lab_id})
 
     return render(request, 'lab/student/view_lab.html', context)
 
@@ -85,6 +85,6 @@ def view_problem(request, problem_id, attempt_id=None):
         }
 
         if student.is_dummy:
-            context['alter_ego'] = student.alter_ego
+            context['instructor_href'] = reverse('instructor_view_problem', kwargs={'problem_id': problem_id})
 
         return render(request, 'lab/student/view_problem.html', context)

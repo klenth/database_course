@@ -48,6 +48,9 @@
                                         {% csrf_token %}
                                         <button class="image"><img src="{% static 'image/duplicate.svg' %}" alt="Duplicate lab" title="Duplicate lab"></button>
                                     </form>
+                                    <form action="{% url 'instructor_edit_lab' course_handle=course.handle lab_id=lab.id %}" method="get">
+                                        <button class="image"><img src="{% static 'image/pencil.svg' %}" alt="Edit lab" title="Edit lab"></button>
+                                    </form>
                                     <div class="spacer"></div>
                                     <form action="{% url 'instructor_delete_lab' lab_id=lab.id %}" method="post">
                                         {% csrf_token %}
@@ -84,6 +87,9 @@
                                         <form action="{% url 'instructor_duplicate_lab' lab_id=lab.id %}" method="post">
                                             {% csrf_token %}
                                             <button class="image"><img src="{% static 'image/duplicate.svg' %}" alt="Duplicate lab" title="Duplicate lab"></button>
+                                        </form>
+                                        <form action="{% url 'instructor_edit_lab' course_handle=course.handle lab_id=lab.id %}" method="get">
+                                            <button class="image"><img src="{% static 'image/pencil.svg' %}" alt="Edit lab" title="Edit lab"></button>
                                         </form>
                                         <div class="spacer"></div>
                                         <form action="{% url 'instructor_delete_lab' lab_id=lab.id %}" method="post">

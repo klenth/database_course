@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.views.decorators import csrf as csrf_decorators
 from django.http import Http404, HttpResponse
 import django.contrib.auth.decorators as auth_decorators
@@ -107,6 +107,7 @@ def view_lab(request, lab_id):
         'lab': lab,
         'enabled_problems': lab.problems.filter(enabled=True),
         'disabled_problems': lab.problems.filter(enabled=False),
+        'student_href': reverse('student_view_lab', kwargs={'lab_id': lab.id})
     }
 
     return render(request, 'lab/instructor/view_lab.html', context)
@@ -252,6 +253,7 @@ def view_problem(request, problem_id):
 
     context = {
         'problem': problem,
+        'student_href': reverse('student_view_problem', kwargs={'problem_id': problem_id})
     }
 
     return render(request, 'lab/instructor/view_problem.html', context)

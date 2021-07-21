@@ -37,13 +37,14 @@
             {% endif %}
         </nav>
 
-        {% if alter_ego or instructor %}
+        {% if instructor_href or student_href %}
             <div class="alter-ego">
                 {% block alter_ego %}
-                    {% if alter_ego %}
-                        Acting as a student.<a href="{% url 'home' %}">Return to instructor view</a>
-                    {% elif instructor  %}
-                        <a href="{% url 'instructor_dummy_home' %}">Enter student view</a>
+                    {% if instructor_href %}
+                        Acting as a student. <br/>
+                        <a href="{{ instructor_href }}">Return to instructor view</a>
+                    {% elif student_href %}
+                        <a href="{{ student_href }}">Enter student view</a>
                     {% endif %}
                 {% endblock %}
             </div>
