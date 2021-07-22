@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'course.apps.CourseConfig',
     'lab.apps.LabConfig',
+    'lms.apps.LmsConfig'
 ]
 
 MIDDLEWARE = [
@@ -139,3 +140,4 @@ LOGIN_URL = '/accounts/login/'
 
 LAB_PREFIX = 'lab'
 DBMANAGER_PREFIX = 'databases'
+LMS_PREFIX = 'lms'

@@ -3,5 +3,6 @@ __pycache__/
 /**/settings.py
 /lab/lab_db_settings.py
 /dbmanager/managed_db_settings.py
+/lms/canvas_api_token.py
 /key.secret
 /log

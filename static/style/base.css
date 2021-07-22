@@ -897,6 +897,26 @@ input:invalid {
     outline: 2px solid rgba(192, 0, 0, 0.7);
 }
 
+table.canvas-courses {
+    width: 100%;
+}
+
+table.canvas-courses th, table.canvas-courses td {
+    padding: 2px 4px;
+}
+
+table.canvas-courses input[type="text"] {
+    background: transparent;
+    border: none;
+    width: 100%;
+    border-bottom: 1px solid transparent;
+    font-size: 1rem;
+}
+
+table.canvas-courses input[type="text"]:hover, table.canvas-courses input[type="text"]:focus-visible {
+    border-bottom: 1px solid var(--color-sky);
+}
+
 @font-face {
     font-family: Lato;
     src: url(../font/Lato-Regular.ttf);

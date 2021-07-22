@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        Fetch courses from Canvas
+    </span>
+{% endblock %}
+
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="title">Canvas courses</div>
+
+        <ul class="errorlist">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+
+        <form action="{% url 'import_canvas_courses' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="course-count" value="{{ courses|length }}">
+
+            <table class="highlight-alternating-rows canvas-courses left">
+                <thead>
+                    <tr>
+                        <th class="center">Import</th>
+                        <th>Title</th>
+                        <th>Handle</th>
+                        <th>Term</th>
+                        <th class="center">Students</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                        <tr>
+                            <input type="hidden" name="course{{ forloop.counter0 }}-canvas_id" value="{{ course.canvas_id }}">
+                            <td class="center">
+                                <input type="checkbox" name="course{{ forloop.counter0 }}-selected">
+                            </td>
+                            <td>
+                                <input type="text" name="course{{ forloop.counter0 }}-title" value="{{ course.title }}">
+                            </td>
+                            <td>
+                                <input type="text" name="course{{ forloop.counter0 }}-handle" value="{{ course.handle }}">
+                            </td>
+                            <td>
+                                {{ course.term }}
+                            </td>
+                            <td class="center">
+                                {{ course.total_students }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="right">
+                <button type="submit">Import courses</button>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}
