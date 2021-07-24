@@ -133,3 +133,16 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f'{self.student} / {self.course}{"" if self.active else " (inactive)"}'
+
+
+def unique_username(base, existing=None):
+    if existing is None:
+        existing = set(user.username for user in auth_models.User.objects.all())
+
+    candidate = base
+    counter = 0
+    while candidate in existing:
+        candidate = f'{base}_{counter}'
+        counter += 1
+
+    return candidate

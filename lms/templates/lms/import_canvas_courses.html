@@ -39,7 +39,7 @@
                         <tr>
                             <input type="hidden" name="course{{ forloop.counter0 }}-canvas_id" value="{{ course.canvas_id }}">
                             <td class="center">
-                                <input type="checkbox" name="course{{ forloop.counter0 }}-selected">
+                                <input type="radio" name="selected-course" value="{{ forloop.counter0 }}">
                             </td>
                             <td>
                                 <input type="text" name="course{{ forloop.counter0 }}-title" value="{{ course.title }}">

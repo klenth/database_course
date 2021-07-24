@@ -17,60 +17,55 @@ def import_canvas_courses(request):
     }
 
     if request.method == 'POST':
-        try:
-            course_count = int(request.POST.get('course-count', 0))
-            new_courses = []
-            new_canvas_courses = []
+        course_count = int(request.POST.get('course-count', 0))
 
-            for i in range(course_count):
-                if f'course{i}-selected' not in request.POST:
-                    continue
+        selected_course = int(request.POST.get('selected-course', 0))
 
-                canvas_id = request.POST.get(f'course{i}-canvas_id', None)
-                title = request.POST.get(f'course{i}-title', None)
-                handle = request.POST.get(f'course{i}-handle', None)
+        canvas_id = request.POST.get(f'course{selected_course}-canvas_id', None)
+        title = request.POST.get(f'course{selected_course}-title', None)
+        handle = request.POST.get(f'course{selected_course}-handle', None)
 
-                if not canvas_id:
-                    errors.append('Canvas course ID is missing')
-                if not title or not handle:
-                    errors.append('Must specify title and handle')
+        if not canvas_id:
+            errors.append('Canvas course ID is missing')
+        if not title or not handle:
+            errors.append('Must specify title and handle')
 
-                if not errors:
-                    new_course = Course(title=title, handle=handle, instructor=instructor)
-                    new_courses.append(new_course)
-                    new_canvas_courses.append(CanvasCourse(course=new_course, canvas_id=canvas_id))
-
-            if not errors:
-                for i in range(len(new_courses)):
-                    new_courses[i].save()
-                    new_canvas_courses[i].save()
-                    canvas.update_enrollment(new_canvas_courses[i])
-                return redirect('home')
+        if not errors:
+            maybe_canvas_course = CanvasCourse.objects.filter(canvas_id=canvas_id)
+            if maybe_canvas_course.exists():
+                canvas_course = maybe_canvas_course.get()
             else:
-                def get_or_throw(key):
-                    if key not in request.POST:
-                        raise ValueError
-                    return request.POST[key]
+                new_course = Course(title=title, handle=handle, instructor=instructor)
+                new_course.save()
+                new_canvas_course = CanvasCourse(course=new_course, canvas_id=canvas_id)
+                new_canvas_course.save()
+                canvas_course = new_canvas_course
 
-                try:
-                    context['courses'] = [
-                        {
-                            'canvas_id': get_or_throw(f'course{i}-canvas_id'),
-                            'title': get_or_throw(f'course{i}-title'),
-                            'handle': get_or_throw(f'course{i}-handle'),
-                            'term': get_or_throw(f'course{i}-term'),
-                            'total_students': get_or_throw(f'course{i}-total_students'),
-                        }
-                        for i in range(course_count)
-                    ]
+            canvas.update_enrollment(canvas_course)
 
-                    return render(request, 'lms/import_canvas_courses.html', context)
+            return redirect('home')
 
-                except ValueError:
-                    pass
+        def get_or_throw(key):
+            if key not in request.POST:
+                raise ValueError
+            return request.POST[key]
 
-        except HTTPError as e:
-            errors.append(str(e))
+        try:
+            context['courses'] = [
+                {
+                    'canvas_id': get_or_throw(f'course{i}-canvas_id'),
+                    'title': get_or_throw(f'course{i}-title'),
+                    'handle': get_or_throw(f'course{i}-handle'),
+                    'term': get_or_throw(f'course{i}-term'),
+                    'total_students': get_or_throw(f'course{i}-total_students'),
+                }
+                for i in range(course_count)
+            ]
+
+            return render(request, 'lms/import_canvas_courses.html', context)
+
+        except ValueError:
+            pass
 
     if context['courses'] is None:
         known_courses = CanvasCourse.objects.filter(course__instructor=instructor)
