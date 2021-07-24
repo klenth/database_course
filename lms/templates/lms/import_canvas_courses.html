@@ -49,9 +49,11 @@
                             </td>
                             <td>
                                 {{ course.term }}
+                                <input type="hidden" name="course{{ forloop.counter0 }}-term" value="{{ course.term }}">
                             </td>
                             <td class="center">
                                 {{ course.total_students }}
+                                <input type="hidden" name="course{{ forloop.counter0 }}-total_students" value="{{ course.total_students }}">
                             </td>
                         </tr>
                     {% endfor %}

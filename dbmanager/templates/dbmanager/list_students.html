@@ -18,7 +18,7 @@
         <div class="title">Students</div>
         <ul>
             {% for student in students %}
-                <li><a href="{% url 'student_details' username=student.username %}">{{ student.username }}</a></li>
+                <li><a href="{% url 'student_details' username=student.username %}">{{ student.name }} ({{ student.username }})</a></li>
             {% endfor %}
         </ul>
 

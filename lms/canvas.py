@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from lms import canvas_api_token as credentials
 from .models import *
 import re
+import logging
 
 def canvas_paginated_request(rel_url, data=None):
     results = []
@@ -61,10 +62,39 @@ def download_courses():
 
 
 def update_enrollment(canvas_course):
-    student_data = canvas_paginated_request(f'courses/{canvas_course.canvas_id}/enrollments?type=StudentEnrollment')
+    logging.info(f'Updating enrollment for {canvas_course.course.title}')
+    student_data = canvas_paginated_request(f'courses/{canvas_course.canvas_id}/users?enrollment_type[]=student')
 
     known_students = {
         student.canvas_id: student
         for student in canvas_course.canvas_students()
     }
 
+    for student in student_data:
+        #user_info = student["user"]
+        print(student)
+        canvas_id = str(student['id'])
+        name, sortable_name = student['name'], student['sortable_name']
+        login_id = student.get('login_id', None)
+        email = student.get('email', None)
+
+        if not login_id and email:
+            login_id = email[:email.find('@')]
+        elif not login_id:
+            login_id = slugify(name)
+
+        if canvas_id not in known_students:
+            logging.info(f'\t→ Adding {name} ({canvas_id}) / {login_id}')
+            new_student = Student(name=name, sortable_name=sortable_name, username=login_id, email=email)
+            new_student.save()
+
+            enrollment = Enrollment(
+                student=new_student,
+                course=canvas_course.course,
+            )
+            enrollment.save()
+
+            new_canvas_student = CanvasStudent(student=new_student, canvas_id=canvas_id)
+            new_canvas_student.save()
+        else:
+            logging.info(f'\t→ Skipping {name} ({canvas_id})')
