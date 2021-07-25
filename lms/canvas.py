@@ -5,27 +5,50 @@ from .models import *
 import re
 import logging
 
+_REQUEST_METHODS = {
+    'get': requests.get,
+    'post': requests.post,
+    'put': requests.put,
+}
+
+def canvas_request(*, relative_url=None, absolute_url=None, data=None, method='get'):
+    if relative_url is None and absolute_url is not None:
+        url = absolute_url
+    elif relative_url is not None and absolute_url is None:
+        url = f'{credentials.base_url}/{relative_url}'
+    else:
+        raise ValueError('Must specify exactly one of relative_url and absolute_url')
+
+    method = method.lower()
+    if method not in _REQUEST_METHODS.keys():
+        raise ValueError(f'Method must be one of {"/".join(_REQUEST_METHODS.keys())}')
+
+    request_method = _REQUEST_METHODS[method]
+
+    response = request_method(
+        url=url,
+        headers={'Authorization': f'Bearer {credentials.token}'},
+        data=data,
+    )
+
+    response.raise_for_status()
+
+    return response
+
 
 def canvas_paginated_request(rel_url, data=None):
     results = []
 
-    current_url = f'{credentials.base_url}/{rel_url}'
+    response = canvas_request(relative_url=rel_url, data=data)
 
     while True:
-        response = requests.get(
-            url=current_url,
-            headers={'Authorization': f'Bearer {credentials.token}'},
-            json=data
-        )
-
-        response.raise_for_status()
-
         results += response.json()
 
         if not (response.links and 'next' in response.links):
             break
 
-        current_url = response.links['next']['url']
+        next_url = response.links['next']['url']
+        response = canvas_request(absolute_url=next_url, data=data)
 
     return results
 
@@ -124,3 +147,54 @@ def update_enrollment(canvas_course):
                 course=canvas_course.course,
             )
             enrollment.save()
+
+
+def assign_grade(*, canvas_student, canvas_assignment, grade, comment=None, canvas_course=None):
+    if canvas_course is None:
+        canvas_course = canvas_assignment.lab.course.canvas_course
+        if canvas_course is None:
+            raise ValueError('Assignment does not belong to a Canvas course')
+
+    grade_data = {
+        'submission[posted_grade]': str(grade),
+    }
+
+    if comment:
+        grade_data['comment[text_comment]'] = comment
+
+    response = canvas_request(
+        relative_url=f'courses/{canvas_course.canvas_id}/assignments/{canvas_assignment.canvas_id}/submissions/{canvas_student.canvas_id}',
+        data=grade_data,
+        method='put',
+    )
+
+
+def update_grade_if_higher(*, canvas_student, canvas_assignment, grade, comment=None, canvas_course=None):
+    canvas_course = canvas_assignment.lab.course.canvas_course
+    if canvas_course is None:
+        raise ValueError('Assignment does not belong to a Canvas course')
+
+    # Download current grade
+    response = canvas_request(
+        relative_url=f'courses/{canvas_course.canvas_id}/students/submissions?student_ids[]={canvas_student.canvas_id}&assignment_ids[]={canvas_assignment.canvas_id}',
+    )
+
+    # The above returns a list of submissions. Under the assumption that the Canvas assignment does not actually take
+    # submissions, I *think* we will only ever get exactly one submission result (whose score might be null/None if it
+    # has not yet been graded).
+
+    current_grade = None
+    submissions = response.json()
+
+    if len(submissions) > 1:
+        logging.warning(f'Student {canvas_student.student.name} has multiple submissions for assignment {canvas_assignment.lab.title}; grade may be overwritten!')
+    for submission in response.json():
+        raw_score = submission['score']
+        current_grade = None if raw_score is None else float(raw_score)
+
+    # If it has not yet been graded or the new grade is higher, assign the new grade
+    if current_grade is None or current_grade < grade:
+        assign_grade(canvas_student=canvas_student, canvas_assignment=canvas_assignment, canvas_course=canvas_course,
+                     grade=grade, comment=comment)
+    else:
+        logging.info(f'Not updating {canvas_student.student.name}\'s grade for {canvas_assignment.lab.title} to {grade} because the existing grade is higher: {current_grade}')
