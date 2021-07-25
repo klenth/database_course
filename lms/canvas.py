@@ -162,7 +162,7 @@ def assign_grade(*, canvas_student, canvas_assignment, grade, comment=None, canv
     if comment:
         grade_data['comment[text_comment]'] = comment
 
-    response = canvas_request(
+    canvas_request(
         relative_url=f'courses/{canvas_course.canvas_id}/assignments/{canvas_assignment.canvas_id}/submissions/{canvas_student.canvas_id}',
         data=grade_data,
         method='put',

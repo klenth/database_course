@@ -228,7 +228,7 @@ def instructor_add_test_case(request, problem_id):
             'type': ptc.type,
             'table_data_mapping': {
                 table_name: None
-                for table_name in problem.schema.get_table_names()
+                for table_name in (problem.schema.get_table_names() if problem.schema else [])
             },
         },
         'data_files': [

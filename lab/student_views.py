@@ -49,12 +49,17 @@ def view_lab(request, lab_id):
 
 @auth_decorators.login_required
 def view_problem(request, problem_id, attempt_id=None):
+    from lms import canvas
+
     problem = get_object_or_404(Problem, pk=problem_id)
     student = get_student(request)
+    lab = problem.lab()
 
-    if student not in problem.lab().course.students.all() and not \
-            (student.is_dummy and student.alter_ego.pk == problem.lab().course.instructor.pk):
+    if student not in lab.course.students.all() and not \
+            (student.is_dummy and student.alter_ego.pk == lab.course.instructor.pk):
         raise Http404
+
+    current_score = student.score_on_problem(problem)
 
     if request.method == 'POST':
         text = request.POST.get('text', None)
@@ -63,6 +68,16 @@ def view_problem(request, problem_id, attempt_id=None):
             attempt.save()
             attempt.score = labs.score(attempt)
             attempt.save()
+
+            if attempt.score > current_score \
+                    and (canvas_assignment := lab.canvas_assignment) is not None \
+                    and (canvas_student := student.canvas_student) is not None \
+                    and canvas_assignment.get_auto_update_grade():
+                lab_score = student.score_on_lab(lab)
+                canvas.update_grade_if_higher(
+                    canvas_student=canvas_student, canvas_assignment=canvas_assignment,
+                    grade=lab_score,
+                )
         return redirect('student_view_problem', problem_id=problem_id)
     else:
         #attempts = list(student.attempts(problem))
@@ -81,7 +96,7 @@ def view_problem(request, problem_id, attempt_id=None):
             'selected_attempt': selected_attempt,
             'recent_attempt_text': selected_attempt.text if selected_attempt else attempts[-1].text if attempts else problem.starter_code,
             'current_percent': float(student.score_on_problem(problem)) * 100.0,
-            'current_score': student.score_on_problem(problem),
+            'current_score': current_score,
         }
 
         if student.is_dummy:
