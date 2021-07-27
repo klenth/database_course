@@ -244,5 +244,5 @@ def _run_grade_updates():
                 pending_update.save()
 
 
-_grade_update_thread = threading.Thread(target=_run_grade_updates)
+_grade_update_thread = threading.Thread(target=_run_grade_updates, daemon=True)
 _grade_update_thread.start()
