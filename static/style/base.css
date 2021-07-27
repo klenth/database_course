@@ -80,6 +80,10 @@ a.not-shown.hand-cursor {
     cursor: pointer;
 }
 
+dt:not(:first-child) {
+    margin-top: 32px;
+}
+
 ul.no-marker {
     list-style-type: none;
 }
@@ -610,6 +614,12 @@ button.image {
 
 button:hover {
     background-color: var(--color-thistle);
+}
+
+button.delete-button:hover {
+    background-color: var(--color-sky);
+    color: black;
+    box-shadow: 0 0 1px 1px var(--color-thistle);
 }
 
 button.image:hover {

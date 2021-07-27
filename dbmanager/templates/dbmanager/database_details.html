@@ -1,5 +1,7 @@
 {% extends 'dbmanager/base.html' %}
+
 {% load functional %}
+{% load custom_tags %}
 
 {% block breadcrumbs %}
     <span class="breadcrumb">
@@ -71,7 +73,7 @@
         <table>
             <tr>
                 <th scope="row">Created</th>
-                <td>{{ database.created }}</td>
+                <td>{{ database.created|friendlytime }}</td>
             </tr>
             {% if database.is_deleted %}
             <tr>
@@ -100,35 +102,50 @@
                 </td>
             </tr>
             {% endif %}
-            <tr>
-                <th scope="row">Database actions</th>
-                <td>
-                    {% if not database.is_deleted %}
-                    <form action="{% url 'export_database' db_name=database.name %}" method="post" style="display: inline-block;">
-                        {% csrf_token %}
-                        <button type="submit">Make snapshot...</button>
-                    </form>
+        </table>
+    </div>
 
-                    <span style="display: inline-block; width: 2ex;"></span>
-                    {% endif %}
+    <div class="card">
+        <div class="title">Database actions</div>
+            <dl>
+                {% if not database.is_deleted %}
+                    <dt>
+                        <form action="{% url 'export_database' db_name=database.name %}" method="post" style="display: inline-block;">
+                            {% csrf_token %}
+                            <button type="submit">Make snapshot</button>
+                        </form>
+                    </dt>
+                    <dd>
+                        A database can be rolled back to a snapshot at any time, making them a perfect way to quickly back a database up. They can be imported into another database, or you can download one (as a .sql file) to use elsewhere.
+                    </dd>
+                {% endif %}
 
-                    {% if is_owner %}
+                {% if is_owner %}
+                    <dt>
                         <form action="{% url 'create_token' db_name=database.name %}" method="post" style="display: inline-block;">
                             {% csrf_token %}
                             <button type="submit">Create access token</button>
                         </form>
                         <span style="display: inline-block; width: 2ex;"></span>
-                    {% endif %}
+                    </dt>
+                    <dd>
+                        An access token gives you a login (username/password) to a database. They are intended to be used in code that you write so that you don't have to include your real username and password in the code.
+                    </dd>
+                {% endif %}
 
-                    {% if is_owner %}
+                {% if is_owner %}
+                    <dt>
                         <form action="{% url 'delete_database' db_name=database.name %}" method="get" style="display: inline-block;">
                             <button type="submit" class="delete-button">Delete</button>
                         </form>
-                    {% endif %}
-                </td>
-            </tr>
+                    </dt>
+                    <dd>
+                        Deleting a database permanently destroys the database and everything it contains (tables, views, etc.). If you create a snapshot first, you can always restore it from the snapshot.
+                    </dd>
+                {% endif %}
+            </dl>
         {% if not is_owner %}
-            <tr>
+            <dl>
                 <th scope="row">{% if is_shared %}Also shared with{% else %}Shared with{% endif %}</th>
                 {% comment %}
                 <td>{% for sdba in database.shared_with_students.all %}
@@ -139,95 +156,90 @@
                     {% endfor %}</td>
                 {% endcomment %}
                 <td>{{ database.other_students.all|except:student|map:"name"|join:", " }}</td>
-            </tr>
+            </dl>
         {% endif %}
-        </table>
+    </div>
 
-        {% if is_owner %}
-            <div>
-                <h3>Shares</h3>
+    {% if is_owner %}
+        <div class="card">
+            <div class="title">Shares</div>
                 <form id="adjust_shares_form" action="{% url 'database_details' db_name=database.name %}" method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="change_shares">
-                    <table id="share_table">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_shares">
+                <table id="share_table">
+                    <tr>
+                        <th scope="col">Access</th>
+                        <th scope="col">Student</th>
+                        <th scope="col"></th>
+                    </tr>
+                    {% for sdba in database.shared_with_students.all %}
                         <tr>
-                            <th scope="col">Access</th>
-                            <th scope="col">Student</th>
-                            <th scope="col"></th>
-                        </tr>
-                        {% for sdba in database.shared_with_students.all %}
-                            <tr>
-                                <td>
-                                    <input type="radio"
-                                           id="access_{{ forloop.counter0 }}_ro_box"
-                                           name="access_{{ forloop.counter0 }}"
-                                           value="ro"
-                                            {% if not sdba.write_permission %}checked{% endif %}
-                                           class="buttony">
-                                    <label for="access_{{ forloop.counter0 }}_ro_box">read-only</label>
-                                    &nbsp;
-                                    <input type="radio"
-                                           id="access_{{ forloop.counter0 }}_rw_box"
-                                           name="access_{{ forloop.counter0 }}"
-                                           value="rw"
-                                            {% if sdba.write_permission %}checked{% endif %}
-                                           class="buttony">
-                                    <label for="access_{{ forloop.counter0 }}_rw_box">read/write</label>
-                                </td>
-                                <td>
-                                    {{ sdba.student.name }}
-                                    <input type="hidden" name="access_{{ forloop.counter0 }}_student" value="{{ sdba.student.username }}">
-                                </td>
-                                <td>
-                                    <input type="checkbox"
-                                           id="access_{{ forloop.counter0 }}_unshare_box"
-                                           name="access_{{ forloop.counter0 }}_unshare">
-                                    <label for="access_{{ forloop.counter0 }}_unshare_box">Unshare</label>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        <tr id="new_access_row" {% if unshared_students.count == 0 %}style="display: none;"{% endif %}>
                             <td>
                                 <input type="radio"
-                                       id="new_access_ro_box"
-                                       name="new_access_box"
+                                       id="access_{{ forloop.counter0 }}_ro_box"
+                                       name="access_{{ forloop.counter0 }}"
                                        value="ro"
-                                       checked
+                                        {% if not sdba.write_permission %}checked{% endif %}
                                        class="buttony">
-                                <label for="new_access_ro_box">read-only</label>
+                                <label for="access_{{ forloop.counter0 }}_ro_box">read-only</label>
                                 &nbsp;
                                 <input type="radio"
-                                       id="new_access_rw_box"
-                                       name="new_access_box"
+                                       id="access_{{ forloop.counter0 }}_rw_box"
+                                       name="access_{{ forloop.counter0 }}"
                                        value="rw"
+                                        {% if sdba.write_permission %}checked{% endif %}
                                        class="buttony">
-                                <label for="new_access_rw_box">read/write</label>
+                                <label for="access_{{ forloop.counter0 }}_rw_box">read/write</label>
                             </td>
                             <td>
-                                <select id="new_access_student_box" size="1">
-                                    {% for student in unshared_students %}
-                                        <option value="{{ student.username }}">{{ student.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button id="new_access_add_button" type="button">Add</button>
+                                {{ sdba.student.name }}
+                                <input type="hidden" name="access_{{ forloop.counter0 }}_student" value="{{ sdba.student.username }}">
                             </td>
-                            <td></td>
+                            <td>
+                                <input type="checkbox"
+                                       id="access_{{ forloop.counter0 }}_unshare_box"
+                                       name="access_{{ forloop.counter0 }}_unshare">
+                                <label for="access_{{ forloop.counter0 }}_unshare_box">Unshare</label>
+                            </td>
                         </tr>
-                    </table>
+                    {% endfor %}
+                    <tr id="new_access_row" {% if unshared_students.count == 0 %}style="display: none;"{% endif %}>
+                        <td>
+                            <input type="radio"
+                                   id="new_access_ro_box"
+                                   name="new_access_box"
+                                   value="ro"
+                                   checked
+                                   class="buttony">
+                            <label for="new_access_ro_box">read-only</label>
+                            &nbsp;
+                            <input type="radio"
+                                   id="new_access_rw_box"
+                                   name="new_access_box"
+                                   value="rw"
+                                   class="buttony">
+                            <label for="new_access_rw_box">read/write</label>
+                        </td>
+                        <td>
+                            <select id="new_access_student_box" size="1">
+                                {% for student in unshared_students %}
+                                    <option value="{{ student.username }}">{{ student.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button id="new_access_add_button" type="button">Add</button>
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>
 
-                    <p>
-                        <span id="share_submit_button_container">
-                            <button type="submit" id="share_submit_button">Save changes to shares</button>
-                        </span>
-                    </p>
-                </form>
-            </div>
-        {% endif %}
-
-        <p>
-            Back to <a href="{% url 'student_course_home' course_handle=database.course.handle %}">my databases</a>
-        </p>
-    </div>
+                <p>
+                    <span id="share_submit_button_container">
+                        <button type="submit" id="share_submit_button">Save changes to shares</button>
+                    </span>
+                </p>
+            </form>
+        </div>
+    {% endif %}
 </div>
 
 <script>

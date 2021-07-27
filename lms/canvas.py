@@ -12,6 +12,7 @@ _REQUEST_METHODS = {
     'put': requests.put,
 }
 
+
 def canvas_request(*, relative_url=None, absolute_url=None, data=None, method='get'):
     if relative_url is None and absolute_url is not None:
         url = absolute_url
