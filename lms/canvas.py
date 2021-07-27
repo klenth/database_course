@@ -4,6 +4,7 @@ from lms import canvas_api_token as credentials
 from .models import *
 import re
 import logging
+import threading
 
 _REQUEST_METHODS = {
     'get': requests.get,
@@ -198,3 +199,50 @@ def update_grade_if_higher(*, canvas_student, canvas_assignment, grade, comment=
                      grade=grade, comment=comment)
     else:
         logging.info(f'Not updating {canvas_student.student.name}\'s grade for {canvas_assignment.lab.title} to {grade} because the existing grade is higher: {current_grade}')
+
+
+_pending_grade_update_cv = threading.Condition()
+
+
+def submit_grade_update_task(*, canvas_student, canvas_assignment):
+    global _grade_update_thread
+    global _pending_grade_update_cv
+
+    with _pending_grade_update_cv:
+        if not PendingCanvasGradeUpdate.objects.filter(canvas_student=canvas_student, canvas_assignment=canvas_assignment).exists():
+            update = PendingCanvasGradeUpdate(canvas_student=canvas_student, canvas_assignment=canvas_assignment)
+            update.save()
+        _pending_grade_update_cv.notify()
+
+
+def _run_grade_updates():
+    global _pending_grade_update_cv
+
+    def pending_updates_query():
+        return PendingCanvasGradeUpdate.objects.filter(status=PendingCanvasGradeUpdate.STATUS_UNATTEMPTED)
+
+    while True:
+        pending_updates_q = None
+
+        with _pending_grade_update_cv:
+            while True:
+                pending_updates_q = pending_updates_query()
+                if pending_updates_q.exists():
+                    break
+                _pending_grade_update_cv.wait()
+
+        logging.info(f'Grade update thread awoken with {pending_updates_q.count()} updates to commit')
+        for pending_update in list(pending_updates_q):
+            c_student, c_assignment = pending_update.canvas_student, pending_update.canvas_assignment
+            grade = c_student.student.score_on_lab(c_assignment.lab)
+            try:
+                update_grade_if_higher(canvas_student=c_student, canvas_assignment=c_assignment, grade=grade)
+                pending_update.delete()
+            except requests.HTTPError as e:
+                logging.error(f'Unable to update grade for {c_student.student} on {c_assignment.lab}: {e}')
+                pending_update.status = PendingCanvasGradeUpdate.STATUS_FAILED
+                pending_update.save()
+
+
+_grade_update_thread = threading.Thread(target=_run_grade_updates)
+_grade_update_thread.start()

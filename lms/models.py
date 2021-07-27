@@ -29,3 +29,23 @@ class CanvasAssignment(models.Model):
             return canvas_course.auto_update_assignment_grades
         else:
             return False
+
+
+class PendingCanvasGradeUpdate(models.Model):
+    STATUS_UNATTEMPTED = 'U'
+    STATUS_FAILED = 'F'
+
+    STATUS_CHOICES = (
+        (STATUS_UNATTEMPTED, 'unattempted'),
+        (STATUS_FAILED, 'failed'),
+    )
+
+    canvas_student = models.ForeignKey(to=CanvasStudent, null=False, on_delete=models.CASCADE, related_name='+')
+    canvas_assignment = models.ForeignKey(to=CanvasAssignment, null=False, on_delete=models.CASCADE, related_name='+')
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=STATUS_UNATTEMPTED, null=False)
+    requested = models.DateTimeField(null=False, auto_now_add=True)
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(fields=('canvas_student', 'canvas_assignment'), name='unique_student_assignment'),
+        )

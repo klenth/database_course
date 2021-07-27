@@ -64,7 +64,6 @@ class Student(Person):
 
     def score_on_problem(self, problem):
         maybe_score = self.problem_scores.filter(problem=problem)
-        print(maybe_score.query)
         return maybe_score.get().score if maybe_score.exists() else 0.0
 
     def score_on_lab(self, lab):

@@ -202,7 +202,6 @@ def load_test_case_data(test_case, *, cursor):
     cursor.execute('SET FOREIGN_KEY_CHECKS=0')
     for mapping in test_case.table_data_set.all():
         filename = path_for_uploaded_file(mapping.table_data.data_file.name)
-        print(f'Loading table {mapping.table_name} with data from file {filename}')
         cursor.execute(f'''
         LOAD DATA LOCAL
         INFILE %s
@@ -296,10 +295,6 @@ def score_test_case(attempt, test_case):
     instr_results = QueryResults.from_csv(test_case.result_data_file.open('r'))
 
     if test_case.type == models.ProblemTestCase.TEST_CASE_TYPE_TABLE_DATA:
-        print(f'''student_results.rows:
-            {student_results.rows}
-        instr_results.rows:
-            {instr_results.rows}''')
         test_case_score = test_case.points if student_results.rows_match(instr_results) else 0
     elif test_case.type == models.ProblemTestCase.TEST_CASE_TYPE_COLUMN_NAMES:
         test_case_score = test_case.points if student_results.columns_match(instr_results) else 0
