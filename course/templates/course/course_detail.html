@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'courses_home' %}">Courses</a>
+    </span>
+    <span class="breadcrumb">
+        {{ course.title }}
+    </span>
+{% endblock %}
+
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="title">{{ course.title }}</div>
+
+        <h2>Students</h2>
+        <ul>
+            {% for student in active_students %}
+                <li>{{ student.name }}</li>
+            {% empty %}
+                (None)
+            {% endfor %}
+        </ul>
+
+        {% if inactive_students %}
+            <h2>Inactive students</h2>
+            <ul>
+                {% for student in inactive_students %}
+                    <li>{{ student.name }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

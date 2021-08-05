@@ -120,4 +120,18 @@ def courses_home(request):
 
 @login_required
 def course_detail(request, course_handle):
-    pass
+    instructor = get_object_or_404(Instructor, id=request.user.id)
+    course = get_object_or_404(Course, handle=course_handle)
+
+    active_students = course.students.filter(enrollment__active=True)
+    inactive_students = course.students.exclude(enrollment__active=True)
+
+    context = {
+        'instructor': instructor,
+        'course': course,
+        'active_students': active_students,
+        'inactive_students': inactive_students,
+    }
+
+    return render(request, 'course/course_detail.html', context)
+
