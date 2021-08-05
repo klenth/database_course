@@ -111,6 +111,9 @@ def courses_home(request):
             new_course = Course(title=new_title, handle=handle, instructor=instructor)
             new_course.save()
             return redirect('course_detail', course_handle=new_course.handle)
+        else:
+            context['new_course_title'] = new_title
+            context['new_course_handle'] = new_handle
 
     return render(request, 'course/courses_home.html', context)
 
