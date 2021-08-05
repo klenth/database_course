@@ -22,6 +22,7 @@ from . import settings
 
 urlpatterns = [
     path('', course_views.home, name='home'),
+    path(f'{settings.COURSES_PREFIX}/', include('course.urls')),
     path(f'{settings.LAB_PREFIX}/', include('lab.urls')),
     path(f'{settings.DBMANAGER_PREFIX}/', include('dbmanager.urls')),
     path(f'{settings.LMS_PREFIX}/', include('lms.urls')),

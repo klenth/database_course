@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        Courses
+    </span>
+{% endblock %}
+
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="title">Courses</div>
+
+        <ul>
+            {% for course in courses %}
+                <li>
+                    <a href="{% url 'course_detail' course_handle=course.handle %}">{{ course.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card">
+        <div class="title">New course</div>
+
+        <h2>Create course</h2>
+        <ul class="errorlist">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        <form action="{% url 'create_course' %}" method="post">
+            {% csrf_token %}
+            <dl>
+                <dt><label for="course-title-box">Course title</label></dt>
+                <dd><input type="text" id="course-title-box" name="new-course-title" value="{{ new_course_title }}"></dd>
+
+                <dt><label for="course-handle-box">Course handle</label></dt>
+                <dd><input type="text" id="course-handle-box" name="new-course-handle" value="{{ new_course_handle }}"></dd>
+
+                <dt></dt>
+                <dd><button type="submit">Create course</button></dd>
+            </dl>
+        </form>
+
+        {% if show_canvas_import %}
+            <h2>Import course from Canvas</h2>
+            <form action="{% url 'import_canvas_courses' %}" method="get">
+                <p>
+                    <button type="submit">Import</button>
+                </p>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

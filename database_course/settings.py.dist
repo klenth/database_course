@@ -138,6 +138,7 @@ CLASS_TIMEZONE = 'US/Mountain'
 
 LOGIN_URL = '/accounts/login/'
 
+COURSES_PREFIX = 'courses'
 LAB_PREFIX = 'lab'
 DBMANAGER_PREFIX = 'databases'
 LMS_PREFIX = 'lms'
