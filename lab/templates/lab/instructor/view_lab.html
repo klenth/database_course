@@ -2,6 +2,7 @@
 
 {% load custom_tags %}
 {% load static %}
+{% load canvas_filters %}
 
 {% block breadcrumbs %}
     <span class="breadcrumb">
@@ -22,6 +23,35 @@
     <div class="cards">
         <div class="card">
             <div class="title">{{ lab.title }}</div>
+            {% if canvas_integration_enabled %}
+                <h2>Canvas integration</h2>
+
+                {% if canvas_assignment %}
+                    <p>
+                        Linked to <a href="{{ canvas_assignment|canvas_assignment_url }}">Canvas assignment</a>
+                    </p>
+                    <p>
+                        <form action="{% url 'set_canvas_assignment_auto_update_grade' assignment_id=canvas_assignment.id %}" method="post">
+                            {% csrf_token %}
+                            <label>
+                                <input type="checkbox" name="auto-update" {% if canvas_assignment.auto_update_grade %}checked{% endif %}>
+                                Automatically update grades on Canvas
+                            </label>
+                            <button type="submit">Update</button>
+                        </form>
+                        <form action="{% url 'canvas_push_grades' assignment_id=canvas_assignment.id %}" method="post">
+                            {% csrf_token %}
+                            <p><button type="submit">Update all grades now</button></p>
+                        </form>
+                    </p>
+                {% else %}
+
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="title">Problems</div>
             <div class="lab problems">
                 {% for problem in enabled_problems %}
                     <a href="{% url 'instructor_view_problem' problem_id=problem.id %}" class="not-shown hand-cursor"><div class="problem">

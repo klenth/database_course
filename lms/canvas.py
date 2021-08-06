@@ -172,7 +172,7 @@ def assign_grade(*, canvas_student, canvas_assignment, grade, comment=None, canv
 
 
 def update_grade_if_higher(*, canvas_student, canvas_assignment, grade, comment=None, canvas_course=None):
-    canvas_course = canvas_assignment.lab.course.canvas_course
+    canvas_course = canvas_course or canvas_assignment.lab.course.canvas_course
     if canvas_course is None:
         raise ValueError('Assignment does not belong to a Canvas course')
 
@@ -200,6 +200,50 @@ def update_grade_if_higher(*, canvas_student, canvas_assignment, grade, comment=
                      grade=grade, comment=comment)
     else:
         logging.info(f'Not updating {canvas_student.student.name}\'s grade for {canvas_assignment.lab.title} to {grade} because the existing grade is higher: {current_grade}')
+
+
+def update_grades_if_higher(*, canvas_assignment, student_grades, canvas_course=None):
+    '''student_grades: dictionary where keys are student Canvas IDs and values are dictionaries:
+        {
+            'score': number,
+            'comment': string [optional]
+        }'''
+    canvas_course = canvas_course or canvas_assignment.lab.course.canvas_course
+    if canvas_course is None:
+        raise ValueError('Assignment does not belong to a Canvas course')
+
+    # Download current grades
+    submissions = canvas_paginated_request(
+        rel_url=f'courses/{canvas_course.canvas_id}/students/submissions?student_ids[]=all&assignment_ids[]={canvas_assignment.canvas_id}',
+    )
+
+    # Filter out any grades that are higher on Canvas
+    grades_to_update = student_grades
+    for submission in submissions:
+        user_id = str(submission['user_id'])
+        if user_id in student_grades:
+            present_grade = submission['score']
+            if present_grade is not None and grades_to_update[user_id]['score'] < present_grade:
+                del grades_to_update[user_id]
+
+    if not grades_to_update:
+        logging.info(f'In response to request to update grades, not updating anything because all grades in Canvas are higher')
+        return
+    else:
+        logging.info(f'Updating grades for {len(grades_to_update)} students')
+
+    data = {}
+    for user_id in grades_to_update:
+        data[f'grade_data[{user_id}][posted_grade]'] = grades_to_update[user_id]['score']
+        if 'comment' in grades_to_update[user_id]:
+            data[f'grade_data[{user_id}][text_comment]'] = grades_to_update[user_id]['comment']
+
+    print(repr(data))
+    canvas_request(
+        relative_url=f'courses/{canvas_course.canvas_id}/assignments/{canvas_assignment.canvas_id}/submissions/update_grades',
+        data=data,
+        method='post'
+    )
 
 
 _pending_grade_update_cv = threading.Condition()

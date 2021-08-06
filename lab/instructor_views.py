@@ -3,6 +3,8 @@ from django.views.decorators import csrf as csrf_decorators
 from django.http import Http404, HttpResponse
 import django.contrib.auth.decorators as auth_decorators
 from .models import *
+from lms.models import CanvasCourse, CanvasAssignment
+from django.apps import apps
 
 
 def instructor_home(request, instructor):
@@ -103,12 +105,19 @@ def view_lab(request, lab_id):
     if lab.course.instructor != instructor:
         raise Http404
 
+    canvas_enabled = apps.is_installed('lms') and CanvasCourse.objects.filter(course=lab.course).exists()
+
     context = {
         'lab': lab,
         'enabled_problems': lab.problems.filter(enabled=True),
         'disabled_problems': lab.problems.filter(enabled=False),
-        'student_href': reverse('student_view_lab', kwargs={'lab_id': lab.id})
+        'student_href': reverse('student_view_lab', kwargs={'lab_id': lab.id}),
+        'canvas_integration_enabled': canvas_enabled,
     }
+
+    if canvas_enabled:
+        maybe_canvas_assignment = CanvasAssignment.objects.filter(lab=lab)
+        context['canvas_assignment'] = maybe_canvas_assignment.get() if maybe_canvas_assignment.exists() else None
 
     return render(request, 'lab/instructor/view_lab.html', context)
 

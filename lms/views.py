@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.transaction import atomic
+from django.http import Http404
 from .models import *
 from . import canvas
 from requests import HTTPError
@@ -79,3 +80,48 @@ def import_canvas_courses(request):
             errors.append(str(e))
 
     return render(request, 'lms/import_canvas_courses.html', context)
+
+
+@login_required
+def set_canvas_assignment_auto_update_grade(request, assignment_id):
+    instructor = get_object_or_404(Instructor, id=request.user.id)
+    assignment = get_object_or_404(CanvasAssignment, pk=assignment_id)
+
+    if assignment.lab.course.instructor != instructor:
+        raise Http404
+
+    if request.method != 'POST':
+        raise Http404
+
+    old_auto_update_grade = assignment.auto_update_grade
+    new_auto_update_grade = 'auto-update' in request.POST
+
+    if new_auto_update_grade != old_auto_update_grade:
+        assignment.auto_update_grade = 'auto-update' in request.POST
+        assignment.save()
+
+    return redirect('instructor_view_lab', lab_id=assignment.lab.id)
+
+
+@login_required
+def canvas_push_grades(request, assignment_id):
+    instructor = get_object_or_404(Instructor, id=request.user.id)
+    assignment = get_object_or_404(CanvasAssignment, pk=assignment_id)
+
+    if assignment.lab.course.instructor != instructor:
+        raise Http404
+
+    if request.method != 'POST':
+        raise Http404
+
+    grades = {
+        canvas_student.canvas_id: {
+            'score': canvas_student.student.score_on_lab(assignment.lab),
+        }
+        for canvas_student in CanvasStudent.objects.filter(student__enrollment__course=assignment.lab.course, student__enrollment__active=True)
+    }
+
+    canvas.update_grades_if_higher(canvas_assignment=assignment, student_grades=grades)
+
+    return redirect('instructor_view_lab', lab_id=assignment.lab.id)
+
