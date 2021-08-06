@@ -223,7 +223,7 @@ def update_grades_if_higher(*, canvas_assignment, student_grades, canvas_course=
         user_id = str(submission['user_id'])
         if user_id in student_grades:
             present_grade = submission['score']
-            if present_grade is not None and grades_to_update[user_id]['score'] < present_grade:
+            if present_grade is not None and grades_to_update[user_id]['score'] <= present_grade:
                 del grades_to_update[user_id]
 
     if not grades_to_update:
