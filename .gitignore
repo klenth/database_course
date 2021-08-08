@@ -6,3 +6,6 @@ __pycache__/
 /lms/canvas_api_token.py
 /key.secret
 /log
+/venv/
+/venv
+

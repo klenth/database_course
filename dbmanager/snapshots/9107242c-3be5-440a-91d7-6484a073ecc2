@@ -1,0 +1,24 @@
+CREATE TABLE Company (
+    id INT UNSIGNED,
+    name VARCHAR(100) NOT NULL DEFAULT '',
+    
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE Employee (
+    tin CHAR(9) NOT NULL,
+    fname VARCHAR(50) NOT NULL,
+    lname VARCHAR(50) NOT NULL,
+    
+    PRIMARY KEY (tin)
+);
+
+CREATE TABLE EmployeeWorksAt (
+    emp_tin CHAR(9) NOT NULL,
+    company_id INT UNSIGNED,
+    hire_date DATE,
+    
+    PRIMARY KEY (emp_tin, company_id),
+    FOREIGN KEY (emp_tin) REFERENCES Employee (tin),
+    FOREIGN KEY (company_id) REFERENCES Company (id)
+);
