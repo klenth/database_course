@@ -29,14 +29,14 @@ def home(request):
                 links.append({
                     'text': 'Lab',
                     'explanation': 'Work on assigned SQL labs',
-                    'href': course_settings.LAB_PREFIX + reverse('lab_home', urlconf=lab_urlconf),
+                    'href': reverse('lab_home', current_app='course'),
                 })
 
             if apps.is_installed('dbmanager') or True:
                 links.append({
                     'text': 'Database manager',
                     'explanation': 'Create and manage your databases on the class database server',
-                    'href': course_settings.DBMANAGER_PREFIX + reverse('student_course_home', urlconf=dbmanager_urlconf, kwargs={'course_handle': course.handle}),
+                    'href': reverse('student_course_home', current_app='course', kwargs={'course_handle': course.handle}),
                 })
 
             courses_data.append(course_data)
@@ -55,21 +55,21 @@ def home(request):
         links.append({
             'text': 'Course management',
             'explanation': 'Add, modify, and manage courses in the system',
-            'href': course_settings.COURSES_PREFIX + reverse('courses_home', urlconf='course.urls')
+            'href': reverse('courses_home', current_app='course'),
         })
 
         if apps.is_installed('lab'):
             links.append({
                 'text': 'SQL Lab',
                 'explanation': 'SQL lab platform',
-                'href': course_settings.LAB_PREFIX + reverse('lab_home', urlconf=lab_urlconf)
+                'href': reverse('lab_home', current_app='course'),
             })
 
         if apps.is_installed('dbmanager'):
             links.append({
                 'text': 'Database manager',
                 'explanation': 'Manage student databases',
-                'href': course_settings.DBMANAGER_PREFIX + reverse('student_home', urlconf=dbmanager_urlconf)
+                'href': reverse('student_home', current_app='course'),
             })
 
         context = {
