@@ -1,5 +1,5 @@
 """
-Django settings lab app.
+Django settings for lab project.
 """
 
 from pathlib import Path
@@ -7,15 +7,16 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent
-
+PROJECT_DIR = BASE_DIR.parent
 UPLOAD_DIR = BASE_DIR / 'upload'
 MEDIA_ROOT = UPLOAD_DIR
-UPLOAD_SCHEMA_DIR = 'schema'
-UPLOAD_TABLE_DATA_DIR = 'table_data'
-UPLOAD_CORRECT_RESULT_DIR = 'correct'
-UPLOAD_ATTEMPT_RESULT_DIR = 'attempt'
+UPLOAD_SCHEMA_DIR = UPLOAD_DIR / 'schema'
+UPLOAD_TABLE_DATA_DIR = UPLOAD_DIR / 'table_data'
+UPLOAD_CORRECT_RESULT_DIR = UPLOAD_DIR / 'correct'
+UPLOAD_ATTEMPT_RESULT_DIR = UPLOAD_DIR / 'attempt'
 
-import lab_db_settings
+from lab import lab_db_settings
+
 LAB_DB_HOST = lab_db_settings.HOST
 LAB_DB_PORT = lab_db_settings.PORT
 LAB_DB_USER = lab_db_settings.USER

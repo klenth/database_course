@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'course.apps.CourseConfig',
     'lab.apps.LabConfig',
+    'dbmanager.apps.DbmanagerConfig'
     'lms.apps.LmsConfig'
 ]
 

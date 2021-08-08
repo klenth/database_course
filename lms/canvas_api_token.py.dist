@@ -1,0 +1,11 @@
+# Canvas username
+username=None
+
+# Canvas access token
+token=None
+
+# Base URL of Canvas API (usually https://<canvas-site>/api/v1)
+base_url=None
+
+# Base URL of Canvas site
+canvas_site_base_url=None
