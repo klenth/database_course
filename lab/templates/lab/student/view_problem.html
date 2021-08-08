@@ -80,6 +80,7 @@
                     {% with student_data=result.data_file|loadcsv correct_data=result.correct_result_data_file|loadcsv %}
                         <div class="test-case-result">
                             <div class="test-case-score"><span class="points">{{ result.score|floatformat }}</span> / {{ result.test_case.points|floatformat }}</div>
+                            <div class="test-case-title">{{ result.test_case.title }}</div>
                             <div><div class="test-case-data">
                                 <div class="correct data">
                                     <div class="caption">Expected</div>
