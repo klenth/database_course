@@ -3,6 +3,7 @@ from django.http import Http404
 import django.contrib.auth.decorators as auth_decorators
 from .models import *
 from . import labs
+from lms.models import *
 
 
 def get_student(request):
@@ -69,16 +70,18 @@ def view_problem(request, problem_id, attempt_id=None):
             attempt.score = labs.score(attempt)
             attempt.save()
 
+            maybe_canvas_assignment = CanvasAssignment.objects.filter(lab=lab)
+            maybe_canvas_student = CanvasStudent.objects.filter(student=student)
             if attempt.score > current_score \
-                    and (canvas_assignment := lab.canvas_assignment) is not None \
-                    and (canvas_student := student.canvas_student) is not None \
-                    and canvas_assignment.get_auto_update_grade():
+                    and maybe_canvas_assignment.exists() \
+                    and maybe_canvas_student.exists() \
+                    and maybe_canvas_assignment.get().get_auto_update_grade():
                 # lab_score = student.score_on_lab(lab)
                 # canvas.update_grade_if_higher(
                 #     canvas_student=canvas_student, canvas_assignment=canvas_assignment,
                 #     grade=lab_score,
                 # )
-                canvas.submit_grade_update_task(canvas_student=canvas_student, canvas_assignment=canvas_assignment)
+                canvas.submit_grade_update_task(canvas_student=maybe_canvas_student.get(), canvas_assignment=maybe_canvas_assignment.get())
         return redirect('student_view_problem', problem_id=problem_id)
     else:
         #attempts = list(student.attempts(problem))
