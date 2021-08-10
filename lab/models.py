@@ -387,18 +387,6 @@ class StudentProblemScore(models.Model):
         managed = False
 
 
-def _random_link_id():
-    import random
-    return ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(32)])
-
-
-class AccountSetupLink(models.Model):
-    id = models.CharField(primary_key=True, max_length=32,
-                          default=_random_link_id)
-    student = models.ForeignKey(to=Student, on_delete=models.CASCADE, null=False)
-    expiration = models.DateTimeField(null=False)
-
-
 # Triggers!
 def unlink_if_exists(file):
     if os.path.exists(file.name):

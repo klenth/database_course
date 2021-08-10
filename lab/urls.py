@@ -4,8 +4,6 @@ from . import views, student_views, instructor_views, ajax_views
 
 urlpatterns = [
     path('', views.home, name='lab_home'),
-    path('setup/<slug:link_id>', views.setup_account, name='setup_account'),
-    path('setup_complete', views.setup_account_complete, name='setup_account_complete'),
     path('lab/<uuid:lab_id>', student_views.view_lab, name='student_view_lab'),
     path('lab/p/<uuid:problem_id>', student_views.view_problem, name='student_view_problem'),
     path('lab/p/<uuid:problem_id>/<uuid:attempt_id>', student_views.view_problem, name='student_view_problem_attempt'),

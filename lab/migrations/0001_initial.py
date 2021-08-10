@@ -3,6 +3,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import lab.models
+import course.models
 import uuid
 
 
@@ -160,7 +161,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AccountSetupLink',
             fields=[
-                ('id', models.CharField(default=lab.models._random_link_id, max_length=32, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=course.models._random_link_id, max_length=32, primary_key=True, serialize=False)),
                 ('expiration', models.DateTimeField()),
                 ('student', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='course.student')),
             ],
