@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="title">{{ student.name }}</div>
+
+        <form action="{% url 'course_create_account_setup_link' student_uuid=student.uuid %}" method="get">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <p>
+                <button type="submit">Create account setup link</button>
+            </p>
+        </form>
+
+        <form action="{% url 'course_edit_student' student_uuid=student.uuid %}" method="get">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <p>
+                <button type="submit">Edit</button>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}

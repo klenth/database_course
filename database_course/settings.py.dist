@@ -143,3 +143,6 @@ COURSES_PREFIX = 'courses'
 LAB_PREFIX = 'lab'
 DBMANAGER_PREFIX = 'databases'
 LMS_PREFIX = 'lms'
+
+SITE_BASE_URL = 'https://www.yoursite.edu'
+SYSTEM_EMAIL = 'database-course-no-reply@yoursite.edu'

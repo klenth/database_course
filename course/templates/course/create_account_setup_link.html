@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="title">Create account setup link</div>
+        <p>Creating link for {{ student.username }} ({{ student.name }}).</p>
+
+        <form action="{% url 'course_create_account_setup_link' student_uuid=student.uuid %}" method="post">
+            {% csrf_token %}
+            <dl>
+                <dt><label for="expiry-days-box">Days until expiration</label></dt>
+                <dd><input type="number" name="expiry-days" id="expiry-days-box" value="{{ expiry_days }}"></dd>
+
+                <dt><label for="send-email-box">Email the link now</label></dt>
+                <dd><input type="checkbox" name="send-email" id="send-email-box" {% if send_email %}checked{% endif %}></dd>
+
+                <dt><label for="email-box">Address:</label></dt>
+                <dd><input type="email" name="email" id="email-box" value="{{ email }}" {% if not send_email %}disabled{% endif %}></dd>
+            </dl>
+            <p>
+                <button type="submit">Create link</button>
+            </p>
+        </form>
+    </div>
+</div>
+
+<script>
+"use strict";
+
+(function() {
+    const sendEmailBox = document.getElementById("send-email-box");
+    const emailBox = document.getElementById("email-box");
+    sendEmailBox.addEventListener("input", function() {
+        if (sendEmailBox.checked)
+            emailBox.removeAttribute("disabled");
+        else
+            emailBox.setAttribute("disabled", "1");
+    });
+})();
+</script>
+{% endblock %}

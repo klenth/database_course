@@ -34,21 +34,3 @@ def unique_duplicate_name(base_name, existing_names):
         candidate_name = copy_name(count)
 
     return candidate_name
-
-
-def validate_password(password):
-    has_lower, has_upper, has_digit, has_nonalpha, has_noncased = (False,) * 5
-    for c in password:
-        if c.islower():
-            has_lower = True
-        if c.isupper():
-            has_upper = True
-        if '0' <= c <= '9':
-            has_digit = True
-        if not c.isalpha():
-            has_nonalpha = True
-        if c.isalpha() and not c.islower() and not c.isupper():
-            has_noncased = True
-
-    count = sum(map(lambda b: int(b), (has_lower, has_upper, has_digit, has_nonalpha, has_noncased)))
-    return len(password) >= 8 and count >= 3

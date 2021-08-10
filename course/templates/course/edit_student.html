@@ -5,11 +5,19 @@
 {% block content %}
     <div class="cards">
         <div class="card">
-            <div class="title">Account setup</div>
+            {% if account_setup %}
+                <div class="title">Account setup</div>
+            {% elif student %}
+                <div class="title">Edit student {{ student.username }}</div>
+            {% else %}
+                <div class="title">New student</div>
+            {% endif %}
 
-            <p>
-                Thank you for creating an account! Please fill out the information below.
-            </p>
+            {% if account_setup %}
+                <p>
+                    Thank you for creating an account! Please fill out the information below.
+                </p>
+            {% endif %}
 
             <ul class="errorlist">
                 {% for error in errors %}
@@ -17,15 +25,28 @@
                 {% endfor %}
             </ul>
 
-            <form action="{% url 'setup_account' link_id=link.id %}" method="post">
+            {% if account_setup %}
+                <form action="{% url 'course_setup_account' link_id=link.id %}" method="post">
+            {% elif student %}
+                <form action="{% url 'course_edit_student' student_uuid=student.uuid %}" method="post">
+            {% else %}
+                <form action="{% url 'course_new_student' course_handle=course_handle %}" method="post">
+            {% endif %}
                 {% csrf_token %}
+
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
                 <dl class="form indented">
+                    {% if not student %}
+                        <dt><label for="username-box">Username (for logging into this system)</label></dt>
+                        <dd><input type="text" id="username-box" name="username" value="{{ username }}"></dd>
+                    {% endif %}
                     <dt><label for="name-box">Name (as you would like it to appear)</label></dt>
-                    <dd><input type="text" id="name-box" name="name" value="{{ name|default_if_none:student.name }}"></dd>
+                    <dd><input type="text" id="name-box" name="name" value="{{ name }}"></dd>
                     <dt><label for="email-box">Email address (for automated messages)</label></dt>
-                    <dd><input type="email" id="email-box" name="email" value="{{ email|default_if_none:student.email }}" pattern=".+@.+"></dd>
-                    <dt><label for="username-box">Username (for logging into this system)</label></dt>
-                    <dd><input type="text" id="username-box" name="username" value="{{ username|default_if_none:student.username }}"></dd>
+                    <dd><input type="email" id="email-box" name="email" value="{{ email }}" pattern=".+@.+"></dd>
                     <dt><label for="password1-box">Password</label></dt>
                     <dd><input type="password" id="password1-box" name="password1">
                         <div class="error-message hidden" id="password-error-messages">
@@ -40,7 +61,14 @@
                         </div>
                     </dd>
                 </dl>
-                <button>Setup account</button>
+
+                {% if account_setup %}
+                    <button>Setup account</button>
+                {% elif student %}
+                    <button>Save changes</button>
+                {% else %}
+                    <button>Create student</button>
+                {% endif %}
             </form>
         </div>
     </div>

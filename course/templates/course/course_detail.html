@@ -20,7 +20,7 @@
         <h2>Students</h2>
         <ul>
             {% for student in active_students %}
-                <li>{{ student.name }}</li>
+                <li><a href="{% url 'course_student_detail' student_uuid=student.uuid %}">{{ student.name }}</a></li>
             {% empty %}
                 (None)
             {% endfor %}
@@ -30,7 +30,7 @@
             <h2>Inactive students</h2>
             <ul>
                 {% for student in inactive_students %}
-                    <li>{{ student.name }}</li>
+                    <li><a href="{% url 'course_student_detail' student_uuid=student.uuid %}">{{ student.name }}</a></li>
                 {% endfor %}
             </ul>
         {% endif %}
