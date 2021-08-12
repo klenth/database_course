@@ -49,12 +49,21 @@ def view_lab(request, lab_id):
 
 
 @auth_decorators.login_required
-def view_problem(request, problem_id, attempt_id=None):
+def view_problem(request, problem_id, attempt_id=None, as_id=None):
     from lms import canvas
 
     problem = get_object_or_404(Problem, pk=problem_id)
-    student = get_student(request)
     lab = problem.lab()
+    viewing_as = False
+
+    if as_id:
+        instructor = get_object_or_404(Instructor, id=request.user.id)
+        if not lab.course.instructor == instructor:
+            raise Http404
+        student = get_object_or_404(Student, pk=as_id)
+        viewing_as = True
+    else:
+        student = get_student(request)
 
     if student not in lab.course.students.all() and not \
             (student.is_dummy and student.alter_ego.pk == lab.course.instructor.pk):
@@ -115,6 +124,7 @@ f{str(e)}'''
             'recent_attempt_error': selected_attempt.error_text if selected_attempt else attempts[-1].error_text if attempts else '',
             'current_percent': float(student.score_on_problem(problem)) * 100.0,
             'current_score': current_score,
+            'viewing_as_other': viewing_as,
         }
 
         if student.is_dummy:

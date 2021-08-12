@@ -7,6 +7,8 @@ urlpatterns = [
     path('lab/<uuid:lab_id>', student_views.view_lab, name='student_view_lab'),
     path('lab/p/<uuid:problem_id>', student_views.view_problem, name='student_view_problem'),
     path('lab/p/<uuid:problem_id>/<uuid:attempt_id>', student_views.view_problem, name='student_view_problem_attempt'),
+    path('lab/p/<uuid:problem_id>/as/<uuid:as_id>', student_views.view_problem, name='as_student_view_problem'),
+    path('lab/p/<uuid:problem_id>/<uuid:attempt_id>/as/<uuid:as_id>', student_views.view_problem, name='as_student_view_problem_attempt'),
 
     path('i/student', instructor_views.dummy_home, name='instructor_dummy_home'),
     path('i/course/new', instructor_views.edit_course, name='instructor_new_course'),

@@ -26,6 +26,13 @@
     <div class="cards">
         <div class="card">
             <div class="title">{{ problem.title }}</div>
+
+            {% if viewing_as_other %}
+            <p>
+                <span style="color: var(--color-sky);">✱</span> <strong>Viewing this problem as {{ student.username }} ({{ student.name }})</strong>
+            </p>
+            {% endif %}
+
             <div class="current-score">Current score:
                 {% if attempts %}
                     <span style="font-size: 125%; padding-left: 8px;">{{ current_score|floatformat }}</span>
@@ -48,7 +55,11 @@
                                     {{ attempt.score }} / <span style="font-size: 80%;">{{ problem.possible_points }}</span>
                                 </span>
                                 {% if attempt != selected_attempt %}
-                                    <a href="{% url 'student_view_problem_attempt' problem_id=problem.id attempt_id=attempt.id %}">{{ attempt.when|friendlytime }}</a>
+                                    {% if viewing_as_other %}
+                                        <a href="{% url 'as_student_view_problem_attempt' problem_id=problem.id attempt_id=attempt.id as_id=student.uuid %}">{{ attempt.when|friendlytime }}</a>
+                                    {% else %}
+                                        <a href="{% url 'student_view_problem_attempt' problem_id=problem.id attempt_id=attempt.id %}">{{ attempt.when|friendlytime }}</a>
+                                    {% endif %}
                                 {% else %}
                                     {{ attempt.when|friendlytime }}
                                 {% endif %}
@@ -78,7 +89,7 @@
                     {% comment %}<textarea class="code-entry" name="text">{{ recent_attempt_text }}</textarea>{% endcomment %}
                     <div id="editor" class="code-editor">{{ recent_attempt_text }}</div>
                 </form>
-                <p class="right"><button id="submit-button">Submit</button></p>
+                <p class="right"><button id="submit-button" {% if viewing_as_other %}disabled{% endif %}>Submit</button></p>
             </div>
         </div>
 

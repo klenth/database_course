@@ -622,6 +622,14 @@ button.delete-button:hover {
     box-shadow: 0 0 1px 1px var(--color-thistle);
 }
 
+button:disabled {
+    background-color: #888;
+}
+
+button:disabled:hover {
+    background-color: #aaa;
+}
+
 button.image:hover {
     background-color: var(--color-sky-transparent);
 }
@@ -632,7 +640,7 @@ button:focus-visible {
     outline: 6px solid var(--color-thistle-desaturated);
 }
 
-button:active {
+button:not(:disabled):active {
     padding: 9px 15px 7px 17px;
     background-color: var(--color-thistle-darker);
 }
