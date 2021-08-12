@@ -61,18 +61,21 @@ def validate_user_information(*, name, email, password1, password2, username=Non
 
 def email_account_setup_link(link, email, instructor=None):
     subject = 'Account setup link'
-    setup_url = reverse('setup_account', kwargs={'link_id': link.id})
+    setup_url = reverse('course_setup_account', kwargs={'link_id': link.id})
+
+    body = f'Hello {link.student.name},\n\n'
 
     if instructor:
-        body = f'{instructor.name} has invited you to set up an account.'
+        body += f'{instructor.name} has invited you to set up an account.'
     else:
-        body = 'You have been invited to set up an account.'
+        body += 'You have been invited to set up an account.'
 
-    body += f'''\n\nUsing this account, you will be able to manage your databases on the class
-     server and participate in labs.
+    body += f'''
+        \n\nUsing this account, you will be able to manage your databases on the class
+        server and participate in labs.
      
-     Please click the link below to set up your account:
-        {SITE_BASE_URL}{setup_url}
+        Please click the link below to set up your account:
+            {SITE_BASE_URL}{setup_url}
     '''
 
     if instructor:

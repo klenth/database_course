@@ -321,8 +321,8 @@ def setup_account(request, link_id):
         context = {
             'student': link.student,
             'link': link,
-            'name': None,
-            'email': None,
+            'name': student.name,
+            'email': student.email,
             'account_setup': True,
         }
 
