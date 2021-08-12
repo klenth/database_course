@@ -49,18 +49,18 @@ def view_lab(request, lab_id):
 
 
 @auth_decorators.login_required
-def view_problem(request, problem_id, attempt_id=None, as_id=None):
+def view_problem(request, problem_id, attempt_id=None, as_username=None):
     from lms import canvas
 
     problem = get_object_or_404(Problem, pk=problem_id)
     lab = problem.lab()
     viewing_as = False
 
-    if as_id:
+    if as_username:
         instructor = get_object_or_404(Instructor, id=request.user.id)
         if not lab.course.instructor == instructor:
             raise Http404
-        student = get_object_or_404(Student, pk=as_id)
+        student = get_object_or_404(Student, username=as_username)
         viewing_as = True
     else:
         student = get_student(request)
@@ -112,6 +112,8 @@ f{str(e)}'''
         selected_attempt = None
         if attempt_id:
             selected_attempt = get_object_or_404(ProblemAttempt, id=attempt_id)
+            if selected_attempt.student != student:
+                raise Http404
         elif attempts:
             selected_attempt = attempts[-1]
 

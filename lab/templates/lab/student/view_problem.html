@@ -58,7 +58,7 @@
                                 </span>
                                 {% if attempt != selected_attempt %}
                                     {% if viewing_as_other %}
-                                        <a href="{% url 'as_student_view_problem_attempt' problem_id=problem.id attempt_id=attempt.id as_id=student.uuid %}">{{ attempt.when|friendlytime }}</a>
+                                        <a href="{% url 'as_student_view_problem_attempt' problem_id=problem.id attempt_id=attempt.id as_username=student.username %}">{{ attempt.when|friendlytime }}</a>
                                     {% else %}
                                         <a href="{% url 'student_view_problem_attempt' problem_id=problem.id attempt_id=attempt.id %}">{{ attempt.when|friendlytime }}</a>
                                     {% endif %}
