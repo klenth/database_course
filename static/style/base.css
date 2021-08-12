@@ -684,25 +684,25 @@ ul.attempts-list .score {
     margin: 32px auto;
 }
 
-.problem-error {
+.info-box {
     margin: 16px 32px;
     border: 2px solid var(--color-sky);
     padding: 16px;
 }
 
-.problem-error-title {
+.info-box-title {
     font-size: 1.2rem;
     margin-bottom: 8px;
 }
 
-.problem-error-title::before {
+.info-box-title::before {
     content: '\2731';
     display: inline-block;
     color: var(--color-sky);
     width: 32px;
 }
 
-.problem-error-text {
+.info-box-text {
     font-family: 'Hack', monospace;
     padding-left: 32px;
 }

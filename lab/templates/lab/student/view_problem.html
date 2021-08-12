@@ -28,9 +28,11 @@
             <div class="title">{{ problem.title }}</div>
 
             {% if viewing_as_other %}
-            <p>
-                <span style="color: var(--color-sky);">✱</span> <strong>Viewing this problem as {{ student.username }} ({{ student.name }})</strong>
-            </p>
+            <div class="info-box">
+                <div class="info-box-title">
+                    Viewing this problem as {{ student.username }} ({{ student.name }})
+                </div>
+            </div>
             {% endif %}
 
             <div class="current-score">Current score:
@@ -74,9 +76,9 @@
             </div>
 
             {% if recent_attempt_error %}
-                <div class="problem-error">
-                    <div class="problem-error-title">Error</div>
-                    <div class="problem-error-text">
+                <div class="info-box">
+                    <div class="info-box-title">Error</div>
+                    <div class="info-box-text">
                         {{ recent_attempt_error }}
                     </div>
                 </div>
