@@ -353,6 +353,7 @@ class ProblemAttempt(models.Model):
     when = models.DateTimeField(auto_now_add=True)
     text = models.TextField()
     score = models.PositiveSmallIntegerField()
+    error_text = models.TextField(null=False, blank=True, default='')
 
     class Meta:
         ordering = ('when',)

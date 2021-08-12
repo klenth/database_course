@@ -4,7 +4,7 @@ import django.contrib.auth.decorators as auth_decorators
 from .models import *
 from . import labs
 from lms.models import *
-
+from . import errors
 
 def get_student(request):
     maybe_instructor = Instructor.objects.filter(id=request.user.id)
@@ -67,7 +67,20 @@ def view_problem(request, problem_id, attempt_id=None):
         if text:
             attempt = ProblemAttempt(student=student, problem=problem, text=text, score=0)
             attempt.save()
-            attempt.score = labs.score(attempt)
+            try:
+                attempt.score = labs.score(attempt)
+            except errors.StudentCodeError as e:
+                attempt.score = 0
+                attempt.error_text = str(e)
+            except errors.ProblemError as e:
+                attempt.score = 0
+                attempt.error_text = f'''There was an error grading your attempt. This error is not your fault; there is
+something wrong in the specification of the problem. Please contact your
+instructor and pass along the following error message:
+
+-----
+f{str(e)}'''
+
             attempt.save()
 
             maybe_canvas_assignment = CanvasAssignment.objects.filter(lab=lab)
@@ -99,6 +112,7 @@ def view_problem(request, problem_id, attempt_id=None):
             'attempts': attempts,
             'selected_attempt': selected_attempt,
             'recent_attempt_text': selected_attempt.text if selected_attempt else attempts[-1].text if attempts else problem.starter_code,
+            'recent_attempt_error': selected_attempt.error_text if selected_attempt else attempts[-1].error_text if attempts else '',
             'current_percent': float(student.score_on_problem(problem)) * 100.0,
             'current_score': current_score,
         }

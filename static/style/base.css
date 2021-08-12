@@ -676,6 +676,29 @@ ul.attempts-list .score {
     margin: 32px auto;
 }
 
+.problem-error {
+    margin: 16px 32px;
+    border: 2px solid var(--color-sky);
+    padding: 16px;
+}
+
+.problem-error-title {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+}
+
+.problem-error-title::before {
+    content: '\2731';
+    display: inline-block;
+    color: var(--color-sky);
+    width: 32px;
+}
+
+.problem-error-text {
+    font-family: 'Hack', monospace;
+    padding-left: 32px;
+}
+
 .test-case {
     position: relative;
     margin-bottom: 32px;
@@ -743,6 +766,7 @@ ul.attempts-list .score {
     padding: 32px 8px 8px 8px;
     position: relative;
     margin: 16px 32px;
+    overflow-x: auto;
 }
 
 .test-case-result .data table {

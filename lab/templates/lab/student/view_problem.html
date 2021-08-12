@@ -62,6 +62,15 @@
                 {{ problem.prompt|markdown }}
             </div>
 
+            {% if recent_attempt_error %}
+                <div class="problem-error">
+                    <div class="problem-error-title">Error</div>
+                    <div class="problem-error-text">
+                        {{ recent_attempt_error }}
+                    </div>
+                </div>
+            {% endif %}
+
             <div class="problem-work-area">
                 <form id="submission-form" action="{% url 'student_view_problem' problem_id=problem.id %}" method="post">
                     {% csrf_token %}

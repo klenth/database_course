@@ -70,12 +70,12 @@ def email_account_setup_link(link, email, instructor=None):
     else:
         body += 'You have been invited to set up an account.'
 
-    body += f'''
-        \n\nUsing this account, you will be able to manage your databases on the class
-        server and participate in labs.
+    body += f'''\n
+Using this account, you will be able to manage your databases on the class
+server and participate in labs.
      
-        Please click the link below to set up your account:
-            {SITE_BASE_URL}{setup_url}
+Please click the link below to set up your account:
+    {SITE_BASE_URL}{setup_url}
     '''
 
     if instructor:
