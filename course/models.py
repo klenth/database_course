@@ -156,5 +156,5 @@ def _random_link_id():
 class AccountSetupLink(models.Model):
     id = models.CharField(primary_key=True, max_length=32,
                           default=_random_link_id)
-    student = models.ForeignKey(to=Student, on_delete=models.CASCADE, null=False)
+    student = models.ForeignKey(to=Student, on_delete=models.CASCADE, null=False, unique=True)
     expiration = models.DateTimeField(null=False)

@@ -271,14 +271,30 @@ def create_account_setup_link(request, student_uuid):
             if send_email:
                 util.email_account_setup_link(link, email, instructor=instructor)
 
-            return redirect('view_account_setup_link', kwargs={'student_uuid': student.uuid})
+            return redirect('course_view_account_setup_link', student_uuid=student.uuid)
 
     return render(request, 'course/create_account_setup_link.html', context)
 
 
 @login_required
 def view_account_setup_link(request, student_uuid):
-    pass
+    from database_course.settings import SITE_BASE_URL
+    instructor = get_object_or_404(Instructor, id=request.user.id)
+    student = get_object_or_404(Student, pk=student_uuid)
+
+    if not Enrollment.objects.filter(student=student, course__instructor=instructor).exists():
+        # Student is not in a class taught by the instructor who is logged in
+        raise Http404
+
+    link = get_object_or_404(AccountSetupLink, student=student)
+
+    context = {
+        'student': student,
+        'link': link,
+        'setup_url': SITE_BASE_URL + reverse('course_setup_account', kwargs={'link_id': link.id}),
+    }
+
+    return render(request, 'course/view_account_setup_link.html', context)
 
 
 def setup_account(request, link_id):

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="title">Account setup link</div>
+
+        <dl>
+            <dt>Student</dt>
+            <dd><a href="{% url 'course_student_detail' student_uuid=student.uuid %}">{{ student.username }} ({{ student.name }})</a></dd>
+
+            <dt>Link</dt>
+            <dd><a href="{{ setup_url }}">{{ setup_url }}</a></dd>
+
+            <dt>Expires</dt>
+            <dd>{{ link.expiration }}</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}
