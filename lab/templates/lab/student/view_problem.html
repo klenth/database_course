@@ -27,14 +27,6 @@
         <div class="card">
             <div class="title">{{ problem.title }}</div>
 
-            {% if viewing_as_other %}
-            <div class="info-box">
-                <div class="info-box-title">
-                    Viewing this problem as {{ student.username }} ({{ student.name }})
-                </div>
-            </div>
-            {% endif %}
-
             <div class="current-score">Current score:
                 {% if attempts %}
                     <span style="font-size: 125%; padding-left: 8px;">{{ current_score|floatformat }}</span>
@@ -46,6 +38,44 @@
                     not attempted
                 {% endif %}
             </div>
+
+            {% if viewing_as_other %}
+            <div class="info-box">
+                <div class="info-box-title">
+                    Viewing this problem as {{ student.username }} ({{ student.name }})
+                </div>
+            </div>
+            {% endif %}
+
+            {% if viewing_as_other or student.is_dummy %}
+                <p>
+                    <label>
+                        View this problem as
+                        <select id="view-as-box">
+                            <option value="">Self (dummy student)</option>
+                            {% if active_students %}
+                                <optgroup label="Active students">
+                                    {% for other_student in active_students %}
+                                        <option value="{{ other_student.username }}" {% if other_student.uuid == student.uuid %}selected{% endif %}>
+                                            {{ other_student.username }} ({{ other_student.name }}) &nbsp;&nbsp;&nbsp;&nbsp; [{{ other_student.num_attempts }} attempts / {{ other_student.current_score|floatformat }} pts]
+                                        </option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endif %}
+                            {% if inactive_students %}
+                                <optgroup label="Inactive students">
+                                    {% for other_student in inactive_students %}
+                                        <option value="{{ other_student.username }}" {% if other_student.uuid == student.uuid %}selected{% endif %}>
+                                            {{ other_student.username }} ({{ other_student.name }}) &nbsp;&nbsp;&nbsp;&nbsp; [{{ other_student.num_attempts }} attempts / {{ other_student.current_score|floatformat }} pts]
+                                        </option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endif %}
+                        </select>
+                    </label>
+                </p>
+            {% endif %}
+
             {% if attempts %}
                 <div class="indented">
                     <input type="checkbox" id="display-previous-attempts" class="display-toggle">
@@ -144,6 +174,19 @@
         $("#problem-text").value = text;
         $("#submission-form").submit();
     });
+
+    {% if student.is_dummy or viewing_as_other %}
+        const base_url = "{% url 'student_view_problem' problem_id=problem.id %}";
+
+        $("#view-as-box").addEventListener("change", e => {
+            const value = e.target.value;
+            console.log("Student selected: " + value);
+            let url = base_url;
+            if (value)
+                url += "/as/" + value;
+            window.location.href = url;
+        });
+    {% endif %}
 })();
     </script>
 {% endblock %}

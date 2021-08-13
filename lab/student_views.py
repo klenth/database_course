@@ -146,8 +146,22 @@ f{str(e)}'''
             'viewing_as_other': viewing_as,
         }
 
-        if student.is_dummy:
+        if student.is_dummy or viewing_as:
+            course = lab.course
             context['instructor_href'] = reverse('instructor_view_problem', kwargs={'problem_id': problem_id})
+
+            def wrap_students(students):
+                for student in students:
+                    yield {
+                        'uuid': student.uuid,
+                        'username': student.username,
+                        'name': student.name,
+                        'num_attempts': ProblemAttempt.objects.filter(student=student, problem=problem).count(),
+                        'current_score': student.score_on_problem(problem),
+                    }
+
+            context['active_students'] = wrap_students(Student.objects.filter(enrollment__course=course, enrollment__active=True))
+            context['inactive_students'] = wrap_students(Student.objects.filter(enrollment__course=course, enrollment__active=False))
 
         return render(request, 'lab/student/view_problem.html', context)
 
