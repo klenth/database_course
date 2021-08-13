@@ -12,6 +12,8 @@ import uuid
 import subprocess
 import random
 import csv
+from django.shortcuts import reverse
+from django.core.mail import EmailMessage
 
 __DB_CONNECTION = None
 
@@ -335,3 +337,65 @@ def validate_schema(problem_schema):
     thread = Thread(name=f"schema_validate_{problem_schema.id}", target=work)
     thread.start()
 
+
+def student_request_help(*, student, problem, message=None, student_email=None):
+    from database_course.settings import SYSTEM_EMAIL
+    from lab.models import ProblemAttempt
+
+    attempts = ProblemAttempt.objects.filter(student=student, problem=problem)
+    attempt = attempts.last() if attempts else None
+    lab = problem.lab()
+    course = lab.course
+    instructor = course.instructor
+
+    url = get_help_url(student=student, problem=problem, attempt=attempt, by_uuid=True)
+
+    subject = f'{course.title}: Requesting help on {problem.title} ({student.name})'
+    body = f'''{student.name} is requesting help on {problem.title} ({lab.title}).
+
+Link:
+    {url}
+
+Message:
+------
+{message}
+'''
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=SYSTEM_EMAIL,
+        to=(instructor.email,),
+        cc=(student_email,),
+        headers={
+            'Content-Type': 'text/plain; charset="UTF-8"',
+        }
+    )
+
+    email.send(fail_silently=True)
+
+
+def get_help_url(*, student, problem, attempt=None, by_uuid=False):
+    from database_course.settings import SITE_BASE_URL
+
+    args = {
+        'problem_id': problem.id
+    }
+
+    if by_uuid:
+        args['as_uuid'] = student.uuid
+    else:
+        args['as_username'] = student.username
+
+    if attempt:
+        args['attempt_id'] = attempt.id
+
+    if by_uuid and attempt:
+        help_url = reverse('as_uuid_student_view_problem_attempt', kwargs=args)
+    elif by_uuid:
+        help_url = reverse('as_uuid_student_view_problem', kwargs=args)
+    elif attempt:
+        help_url = reverse('as_student_view_problem_attempt', kwargs=args)
+    else:
+        help_url = reverse('as_student_view_problem', kwargs=args)
+
+    return SITE_BASE_URL + help_url

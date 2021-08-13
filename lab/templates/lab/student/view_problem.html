@@ -91,7 +91,13 @@
                     {% comment %}<textarea class="code-entry" name="text">{{ recent_attempt_text }}</textarea>{% endcomment %}
                     <div id="editor" class="code-editor">{{ recent_attempt_text }}</div>
                 </form>
-                <p class="right"><button id="submit-button" {% if viewing_as_other %}disabled{% endif %}>Submit</button></p>
+                <form id="request-help-form" action="{% url 'student_request_help' problem_id=problem.id %}" method="post">
+                    {% csrf_token %}
+                </form>
+                <p class="right">
+                    <button form="request-help-form" {% if viewing_as_other %}disabled{% endif %}>Request help</button>
+                    <button id="submit-button" form="submission-form" {% if viewing_as_other %}disabled{% endif %}>Submit</button>
+                </p>
             </div>
         </div>
 

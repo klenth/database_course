@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'lab_home' %}">Labs</a>
+    </span>
+    <span class="breadcrumb">
+        {{ problem.lab.course.title }}
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_view_lab' lab_id=problem.lab.id %}">{{ problem.lab.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_view_problem' problem_id=problem.id %}">{{ problem.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        Request help
+    </span>
+{% endblock %}
+
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="title">Request help</div>
+
+        <h3>
+            Option 1: direct link
+        </h3>
+        <p>
+            You may share the following link directly with your instructor for them to look at. (Make sure you ask a
+            specific question so that they can help you!)
+        </p>
+        <p class="indented">
+            <a href="{{ help_url }}">{{ help_url }}</a>
+        </p>
+
+        <h3>
+            Option 2: email your instructor
+        </h3>
+        <p>
+            Fill out a message below and the system will email your instructor the link for you.
+        </p>
+
+        {% if errors %}
+            <ul class="errorlist">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form action="{% url 'student_request_help' problem_id=problem.id %}" method="post">
+            {% csrf_token %}
+            <dl>
+                <dt><label for="message-box">Message (please ask a specific question so that the instructor knows how to help you!)</label></dt>
+                <dd>
+                    <textarea name="message" id="message-box" style="min-width: 800px; min-height: 200px;">{{ message|default_if_none:'' }}</textarea>
+                </dd>
+
+                <dt><label for="email-box">Your email address (to use when the instructor replies)</label></dt>
+                <dd>
+                    <input type="email" name="email" id="email-box" value="{{ email|default_if_none:'' }}">
+                </dd>
+            </dl>
+            <p class="right">
+                <button type="submit">Send email</button>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}

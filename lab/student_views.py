@@ -49,21 +49,38 @@ def view_lab(request, lab_id):
 
 
 @auth_decorators.login_required
-def view_problem(request, problem_id, attempt_id=None, as_username=None):
+def view_problem(request, problem_id, attempt_id=None, as_username=None, as_uuid=None):
     from lms import canvas
 
     problem = get_object_or_404(Problem, pk=problem_id)
     lab = problem.lab()
     viewing_as = False
 
-    if as_username:
+    student = get_student(request)
+
+    # If a student (not a dummy) is trying to view the problem "as" a student, fail unless they are viewing it as
+    # themselves. (And if they are, redirect to the not-"as" version.)
+    if not student.is_dummy and (as_uuid or as_username):
+        if as_uuid == student.uuid or as_username == student.username:
+            if attempt_id:
+                return redirect('student_view_problem_attempt', problem_id=problem.id, attempt_id=attempt_id)
+            else:
+                return redirect('student_view_problem', problem_id=problem.id)
+        else:
+            raise Http404
+
+    # Otherwise, if we are viewing "as" a student, we'd better be an instructor! (And the instructor of this class, yet)
+    if as_uuid or as_username:
         instructor = get_object_or_404(Instructor, id=request.user.id)
         if not lab.course.instructor == instructor:
             raise Http404
-        student = get_object_or_404(Student, username=as_username)
+
+        if as_uuid:
+            student = get_object_or_404(Student, pk=as_uuid)
+        else:
+            student = get_object_or_404(Student, username=as_username)
+
         viewing_as = True
-    else:
-        student = get_student(request)
 
     if student not in lab.course.students.all() and not \
             (student.is_dummy and student.alter_ego.pk == lab.course.instructor.pk):
@@ -133,3 +150,52 @@ f{str(e)}'''
             context['instructor_href'] = reverse('instructor_view_problem', kwargs={'problem_id': problem_id})
 
         return render(request, 'lab/student/view_problem.html', context)
+
+
+@auth_decorators.login_required
+def request_help(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    lab = problem.lab()
+
+    student = get_student(request)
+
+    if student not in lab.course.students.all():
+        raise Http404
+
+    attempts = ProblemAttempt.objects.filter(student=student, problem=problem)
+    attempt = attempts.last() if attempts else None
+
+    help_url = labs.get_help_url(student=student, problem=problem, attempt=attempt, by_uuid=True)
+
+    context = {
+        'student': student,
+        'problem': problem,
+        'attempt': attempt,
+        'help_url': help_url,
+        'message': '',
+        'email': student.email,
+    }
+
+    if request.method == 'POST':
+        message = request.POST.get('message', '').strip()
+        student_email = request.POST.get('email')
+
+        errors = []
+        context['errors'] = errors
+
+        if not message:
+            errors.append('You must include a message')
+        if not student_email:
+            errors.append('You must furnish an email address')
+        elif '@' not in student_email:
+            errors.append('You must furnish a valid email address')
+
+        if not errors:
+            labs.student_request_help(student=student, problem=problem, message=message, student_email=student_email)
+            return render(request, 'lab/student/request_help_complete.html', context)
+        else:
+            context['message'] = message
+            context['email'] = student_email
+
+    return render(request, 'lab/student/request_help.html', context)
+

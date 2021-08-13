@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'lab_home' %}">Labs</a>
+    </span>
+    <span class="breadcrumb">
+        {{ problem.lab.course.title }}
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_view_lab' lab_id=problem.lab.id %}">{{ problem.lab.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'student_view_problem' problem_id=problem.id %}">{{ problem.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        Request help
+    </span>
+{% endblock %}
+
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="title">Request help</div>
+
+        <p>
+            Your request has been sent.
+        </p>
+
+        <p>
+            <a href="{% url 'student_view_problem' problem_id=problem.id %}">Return to problem</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
