@@ -91,7 +91,7 @@
                     {% comment %}<textarea class="code-entry" name="text">{{ recent_attempt_text }}</textarea>{% endcomment %}
                     <div id="editor" class="code-editor">{{ recent_attempt_text }}</div>
                 </form>
-                <form id="request-help-form" action="{% url 'student_request_help' problem_id=problem.id %}" method="post">
+                <form id="request-help-form" action="{% url 'student_request_help' problem_id=problem.id %}" method="get">
                     {% csrf_token %}
                 </form>
                 <p class="right">
