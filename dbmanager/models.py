@@ -627,7 +627,7 @@ class ClassDatabase(models.Model):
         self.published = True
         with get_db() as db:
             cursor = db.cursor()
-            for student in Student.objects.all():
+            for student in self.course.students.all():
                 cursor.execute("""GRANT SELECT ON `{}`.* TO %s@'localhost'""".format(self.name),
                                (student.username,))
                 proxy = DatabaseProxyUser.proxy_for(student)
@@ -637,7 +637,7 @@ class ClassDatabase(models.Model):
         self.published = False
         with get_db() as db:
             cursor = db.cursor()
-            for student in Student.objects.all():
+            for student in self.course.students.all():
                 cursor.execute("""REVOKE SELECT ON `{}`.* FROM %s@'localhost'""".format(self.name),
                                (student.username,))
         self.save()
