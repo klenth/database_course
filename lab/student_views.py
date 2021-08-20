@@ -86,7 +86,7 @@ def view_problem(request, problem_id, attempt_id=None, as_username=None, as_uuid
             (student.is_dummy and student.alter_ego.pk == lab.course.instructor.pk):
         raise Http404
 
-    if not problem.enabled and not student.is_dummy:
+    if not (problem.enabled and lab.enabled) and not student.is_dummy:
         raise Http404
 
     current_score = student.score_on_problem(problem)
