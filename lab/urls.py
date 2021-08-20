@@ -5,6 +5,8 @@ from . import views, student_views, instructor_views, ajax_views
 urlpatterns = [
     path('', views.home, name='lab_home'),
     path('lab/<uuid:lab_id>', student_views.view_lab, name='student_view_lab'),
+    path('lab/<uuid:lab_id>/as/<slug:as_username>', student_views.view_lab, name='as_student_view_lab'),
+    path('lab/<uuid:lab_id>/as-uuid/<uuid:as_uuid>', student_views.view_lab, name='as_uuid_student_view_lab'),
     path('lab/p/<uuid:problem_id>', student_views.view_problem, name='student_view_problem'),
     path('lab/p/<uuid:problem_id>/<uuid:attempt_id>', student_views.view_problem, name='student_view_problem_attempt'),
     path('lab/p/<uuid:problem_id>/as/<slug:as_username>', student_views.view_problem, name='as_student_view_problem'),

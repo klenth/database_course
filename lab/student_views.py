@@ -6,6 +6,7 @@ from . import labs
 from lms.models import *
 from . import errors
 
+
 def get_student(request):
     maybe_instructor = Instructor.objects.filter(id=request.user.id)
     if maybe_instructor.exists():
@@ -26,13 +27,35 @@ def student_home(request, student):
 
 
 @auth_decorators.login_required
-def view_lab(request, lab_id):
+def view_lab(request, lab_id, as_username=None, as_uuid=None):
     student = get_student(request)
     lab = get_object_or_404(Lab, pk=lab_id)
+    viewing_as = False
 
     if student not in lab.course.students.all() and not \
             (student.is_dummy and student.alter_ego.pk == lab.course.instructor.pk):
         raise Http404
+
+    # If a student (not a dummy) is trying to view the problem "as" a student, fail unless they are viewing it as
+    # themselves. (And if they are, redirect to the not-"as" version.)
+    if not student.is_dummy and (as_uuid or as_username):
+        if as_uuid == student.uuid or as_username == student.username:
+            return redirect('student_view_lab', lab_id=lab.id)
+        else:
+            raise Http404
+
+    # Otherwise, if we are viewing "as" a student, we'd better be an instructor! (And the instructor of this class, yet)
+    if as_uuid or as_username:
+        instructor = get_object_or_404(Instructor, id=request.user.id)
+        if not lab.course.instructor == instructor:
+            raise Http404
+
+        if as_uuid:
+            student = get_object_or_404(Student, pk=as_uuid)
+        else:
+            student = get_object_or_404(Student, username=as_username)
+
+        viewing_as = True
 
     if not lab.enabled and not student.is_dummy:
         raise Http404
@@ -40,9 +63,25 @@ def view_lab(request, lab_id):
     context = {
         'student': student,
         'lab': lab,
+        'viewing_as_other': viewing_as,
     }
 
-    if student.is_dummy:
+    if student.is_dummy or viewing_as:
+        course = lab.course
+
+        def wrap_students(students):
+            for student in students:
+                yield {
+                    'uuid': student.uuid,
+                    'username': student.username,
+                    'name': student.name,
+                    'current_score': student.score_on_lab(lab),
+                }
+
+        context['active_students'] = wrap_students(
+            Student.objects.filter(enrollment__course=course, enrollment__active=True))
+        context['inactive_students'] = wrap_students(
+            Student.objects.filter(enrollment__course=course, enrollment__active=False))
         context['instructor_href'] = reverse('instructor_view_lab', kwargs={'lab_id': lab_id})
 
     return render(request, 'lab/student/view_lab.html', context)
