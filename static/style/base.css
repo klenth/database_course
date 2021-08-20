@@ -758,6 +758,10 @@ ul.attempts-list .score {
     align-items: flex-start;
 }
 
+.test-case-result .test-case-data .data {
+    max-height: 400px;
+}
+
 .test-case-result .different {
     position: relative;
 }
