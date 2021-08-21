@@ -47,6 +47,12 @@ def get_db():
 
     return DBWrapper()
 
+
+def flush_privileges():
+    with get_db() as db:
+        c = db.cursor()
+        c.execute('FLUSH PRIVILEGES')
+
 #
 # # Create your models here.
 # class Student(auth_models.User):
@@ -169,6 +175,9 @@ class StudentDatabase(models.Model):
                 proxy = DatabaseProxyUser.proxy_for(student)
                 cursor.execute(f"""GRANT ALL ON {db_name}.* TO %s@'localhost'""",
                                (proxy.username,))
+
+            flush_privileges()
+
             db = StudentDatabase(name=db_name,
                                  course=course,
                                  owner=student)
