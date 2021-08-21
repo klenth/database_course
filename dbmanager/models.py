@@ -1,3 +1,18 @@
+# --- Important note ---
+# In the current version of this code, students accounts become @'localhost' on the managed SQL server while access
+# tokens and proxy users are @'%'. This is because of an error on my part: a previous version of the code had all users
+# @'localhost', which worked fine until moving the database_course Django web app to a different server than the one the
+# database was hosted on! Unfortunately I didn't discover this limitation until after all the students in the current
+# semester (Fall 2021) had created their accounts and set passwords; I don't want to make them all reset their passwords
+# and the MySQL user password hash seems to be salted with the host, preventing me from simply copying their users to
+# @'%' ones server-side, so I am leaving the code in this current kludge-y state.
+#
+# What should probably be done ASAP (e.g., Fall 2022 *before* students set their passwords, or at least the next time
+# this web app is deployed) is to replace all @'localhost' with @'%', or provide some mechanism for scoping the MySQL
+# user accounts to the appropriate host. (If we continue to be happy having students ssh tunnel into the server for DB
+# access, maybe it's OK for student accounts to remain @'localhost', but at a minimum the main database manager user and
+# proxy users need to be more accessible to allow the web app to run on a separate [virtual] host.)
+
 from django.db import models
 from django.contrib.auth import models as auth_models
 from django.db.models.signals import pre_delete, pre_save
@@ -52,6 +67,7 @@ def flush_privileges():
     with get_db() as db:
         c = db.cursor()
         c.execute('FLUSH PRIVILEGES')
+        db.commit()
 
 #
 # # Create your models here.
@@ -117,21 +133,21 @@ class DatabaseProxyUser(models.Model):
         with get_db() as db:
             cursor = db.cursor()
 
-            cursor.execute('''CREATE USER IF NOT EXISTS %s@'localhost' ''',
+            cursor.execute('''CREATE USER IF NOT EXISTS %s@'%' ''',
                            (proxy.username,))
-            cursor.execute('''ALTER USER %s@'localhost' IDENTIFIED BY %s''',
+            cursor.execute('''ALTER USER %s@'%' IDENTIFIED BY %s''',
                            (proxy.username, proxy.password,))
 
             for sdb in student.databases.all():
-                cursor.execute(f'''GRANT ALL ON {sdb.name}.* TO %s@'localhost' ''',
+                cursor.execute(f'''GRANT ALL ON {sdb.name}.* TO %s@'%' ''',
                                (proxy.username,))
 
             for sdba in StudentDatabaseAccess.objects.filter(student=student):
                 if sdba.write_permission:
-                    cursor.execute(f'''GRANT ALL ON {sdba.database.name}.* TO %s@'localhost' ''',
+                    cursor.execute(f'''GRANT ALL ON {sdba.database.name}.* TO %s@'%' ''',
                                    (proxy.username,))
                 else:
-                    cursor.execute(f'''GRANT SELECT ON {sdba.database.name}.* TO %s@'localhost' ''',
+                    cursor.execute(f'''GRANT SELECT ON {sdba.database.name}.* TO %s@'%' ''',
                                    (proxy.username,))
 
             db.commit()
@@ -248,20 +264,20 @@ class StudentDatabase(models.Model):
                     if write_permission:
                         cursor.execute("""GRANT ALL ON {}.* TO %s@'localhost'""".format(self.name),
                                        (student.username,))
-                        cursor.execute("""GRANT ALL ON {}.* TO %s@'localhost'""".format(self.name),
+                        cursor.execute("""GRANT ALL ON {}.* TO %s@'%'""".format(self.name),
                                        (proxy.username,))
                     else:
                         try:
                             cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
                                            (student.username,))
-                            cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
+                            cursor.execute("""REVOKE ALL ON {}.* FROM %s@'%'""".format(self.name),
                                            (proxy.username,))
                         except mysql.errors.ProgrammingError as e:
                             if e.errno != errorcode.ER_NONEXISTING_GRANT:
                                 raise e
                         cursor.execute("GRANT SELECT ON {}.* TO %s@'localhost'".format(self.name),
                                        (student.username,))
-                        cursor.execute("GRANT SELECT ON {}.* TO %s@'localhost'".format(self.name),
+                        cursor.execute("GRANT SELECT ON {}.* TO %s@'%'".format(self.name),
                                        (proxy.username,))
 
                 sdba.save()
@@ -271,7 +287,7 @@ class StudentDatabase(models.Model):
                 cursor = db.cursor()
                 cursor.execute("GRANT {} on {}.* TO %s@'localhost'".format("ALL" if write_permission else "SELECT", self.name),
                                (student.username,))
-                cursor.execute("GRANT {} on {}.* TO %s@'localhost'".format("ALL" if write_permission else "SELECT", self.name),
+                cursor.execute("GRANT {} on {}.* TO %s@'%'".format("ALL" if write_permission else "SELECT", self.name),
                                (proxy.username,))
 
             sdba.save()
@@ -285,7 +301,7 @@ class StudentDatabase(models.Model):
                 try:
                     cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
                                    (student.username,))
-                    cursor.execute("""REVOKE ALL ON {}.* FROM %s@'localhost'""".format(self.name),
+                    cursor.execute("""REVOKE ALL ON {}.* FROM %s@'%'""".format(self.name),
                                    (proxy.username,))
                 except mysql.errors.ProgrammingError as e:
                     if e.errno != errorcode.ER_NONEXISTING_GRANT:
@@ -565,8 +581,10 @@ class DatabaseImport(models.Model):
 
         with get_db() as db:
             cursor = db.cursor()
-            cursor.execute(f'''GRANT ALL ON {self.database.name}.* TO %s@'localhost' ''',
+            cursor.execute(f'''GRANT ALL ON {self.database.name}.* TO %s@'%' ''',
                            (proxy.username,))
+
+        flush_privileges()
 
         import threading
 
@@ -621,7 +639,7 @@ class ClassDatabase(models.Model):
             cursor.execute("""CREATE DATABASE IF NOT EXISTS `{}`""".format(name))
 
             for superuser in auth_models.User.objects.filter(is_superuser=True):
-                cursor.execute("""GRANT ALL ON `{}`.* TO %s@'localhost'""".format(name),
+                cursor.execute("""GRANT ALL ON `{}`.* TO %s@'%'""".format(name),
                                (superuser.username,))
 
             cdb = ClassDatabase(name=name, published=published, **kwargs)
@@ -687,9 +705,9 @@ class AccessToken(models.Model):
         token = AccessToken(database=database, write_permission=write_permission, **kwargs)
         with get_db() as db:
             cursor = db.cursor()
-            cursor.execute('''CREATE USER %s@'localhost' IDENTIFIED BY %s''',
+            cursor.execute('''CREATE USER %s@'%' IDENTIFIED BY %s''',
                            (token.username, token.password))
-            cursor.execute('''GRANT {} ON `{}`.* TO %s@'localhost' '''.format(
+            cursor.execute('''GRANT {} ON `{}`.* TO %s@'%' '''.format(
                 'ALL' if write_permission else 'SELECT', database.name
             ), (token.username,))
         token.save()
@@ -701,12 +719,12 @@ class AccessToken(models.Model):
         with get_db() as db:
             cursor = db.cursor()
             if write_permission:
-                cursor.execute('''GRANT ALL ON `{}`.* TO %s@'localhost' '''.format(self.database.name),
+                cursor.execute('''GRANT ALL ON `{}`.* TO %s@'%' '''.format(self.database.name),
                                (self.username,))
             else:
-                cursor.execute('''REVOKE ALL ON `{}`.* FROM %s@'localhost' '''.format(self.database.name),
+                cursor.execute('''REVOKE ALL ON `{}`.* FROM %s@'%' '''.format(self.database.name),
                                (self.username,))
-                cursor.execute('''GRANT SELECT ON `{}`.* TO %s@'localhost' '''.format(self.database.name),
+                cursor.execute('''GRANT SELECT ON `{}`.* TO %s@'%' '''.format(self.database.name),
                                (self.username,))
         self.write_permission = write_permission
         self.save()
@@ -717,7 +735,7 @@ def _access_token_pre_delete(sender, instance, **kwargs):
     with get_db() as db:
         cursor = db.cursor()
         try:
-            cursor.execute('''DROP USER %s@'localhost' ''', (instance.username,))
+            cursor.execute('''DROP USER %s@'%' ''', (instance.username,))
         except mysql.ProgrammingError as e:
             print(e)
 
