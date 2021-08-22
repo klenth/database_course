@@ -121,7 +121,7 @@
                             <label for="import_db_new_button">New database:
                                 <span class="database-name">{{ export.student.username }}_</span></label><input type="text" class="database-name" size="20" name="new_db_name" id="new_db_name_box" maxlength="{{ max_db_name_length }}" pattern="[a-zA-Z_][a-zA-Z0-9_]*">
                             <br>
-                            <input type="submit" value="Import">
+                            <button type="submit">Import</button>
                         </form>
                     </td>
                 </tr>
@@ -129,7 +129,7 @@
                     <th scope="row">
                         <form action="{% url 'delete_export' id=export.id %}" method="post">
                             {% csrf_token %}
-                            <input type="submit" class="delete-button" value="Delete snapshot">
+                            <button type="submit" class="delete-button">Delete snapshot</button>
                         </form>
                     </th>
                     <td></td>

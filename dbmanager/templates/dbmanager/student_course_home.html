@@ -158,8 +158,8 @@
                     <table id="exports" class="highlight-alternating-rows">
                         <thead>
                             <tr>
-                                <th scope="col">When</th>
                                 <th scope="col">Database</th>
+                                <th scope="col">When</th>
                                 <th scope="col">Status</th>
                                 <th scope="col"></th>
                             </tr>
@@ -167,7 +167,6 @@
                         <tbody>
                             {% for export in exports %}
                                 <tr>
-                                    <td>{{ export.request_time|friendlytime }}</td>
                                     <td>
                                         {% if export.database %}
                                             <a href="{% url 'database_details' db_name=export.database.name %}" class="database-name">{{ export.database.name }}</a>
@@ -177,23 +176,19 @@
                                             ???
                                         {% endif %}
                                     </td>
+                                    <td>{{ export.request_time|friendlytime }}</td>
                                     <td>
                                         {% if export.success %}
-                                            <a href="{% url 'export_details' id=export.id %}">Complete</a>
-                                            | <a href="{% url 'download_export' id=export.id %}">Download</a>
+                                            Complete
                                         {% elif  export.is_active %}
-                                            <a href="{% url 'export_details' id=export.id %}">In progress</a>
+                                            In progress
                                         {% elif  export.success is None %}
-                                            <a href="{% url 'export_details' id=export.id%}">Failed</a>
+                                            Failed
                                         {% endif %}
                                     </td>
                                     <td>
                                         {% if export.success is not None %}
-                                            <form action="{% url 'delete_export' id=export.id %}" method="post">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="next" value="{% url 'student_home' %}">
-                                                <button type="submit" class="delete-button">Delete</button>
-                                            </form>
+                                            <a href="{% url 'export_details' id=export.id %}">View</a>
                                         {% endif %}
                                     </td>
                                 </tr>
