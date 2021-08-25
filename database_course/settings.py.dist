@@ -146,3 +146,11 @@ LMS_PREFIX = 'lms'
 
 SITE_BASE_URL = 'https://www.yoursite.edu'
 SYSTEM_EMAIL = 'database-course-no-reply@yoursite.edu'
+
+# Uncomment ADMINS and SERVER_EMAIL to get emails on error 500
+
+#ADMINS = [
+#    ('Name', 'email@whatever.edu')
+#]
+
+#SERVER_EMAIL = 'sql-lab@localhost'
