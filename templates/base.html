@@ -1,5 +1,7 @@
 {% load static %}
 
+{% load course_tags %}
+
 <!DOCTYPE html>
 <html dir="ltr" lang="en-us">
     <head>
@@ -31,6 +33,12 @@
                 <div class="right user-box">
                     You are logged in as {{ user }}.
                     <span class="user-controls">
+                        {% with student=request.user|as_student %}
+                            {% if student %}
+                                <a href="{% url 'course_edit_student' student_uuid=student.uuid%}?next={{ request.path }}">Account settings</a>
+                                &nbsp; | &nbsp;
+                            {% endif %}
+                        {% endwith %}
                         <a href="{% url 'logout' %}">Logout</a>
                     </span>
                 </div>

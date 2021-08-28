@@ -55,6 +55,7 @@ class QueryResults:
 
         if fetch_data:
             # Fetch up to LAB_MAX_QUERY rows
+            # TODO: make this work with set()s returned from the cursor (and maybe other data types?)
             rows = cursor.fetchmany(size=settings.LAB_MAX_QUERY_ROWS)
             incomplete = cursor.fetchone() is not None
         else:

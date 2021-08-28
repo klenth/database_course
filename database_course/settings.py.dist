@@ -154,3 +154,4 @@ SYSTEM_EMAIL = 'database-course-no-reply@yoursite.edu'
 #]
 
 #SERVER_EMAIL = 'sql-lab@localhost'
+#DEFAULT_FROM_EMAIL = 'sql-lab@localhost'

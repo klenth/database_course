@@ -142,6 +142,7 @@ def student_detail(request, student_uuid=None):
 
     context = {
         'student': student,
+        'instructor': instructor,
     }
 
     return render(request, 'course/student_detail.html', context)

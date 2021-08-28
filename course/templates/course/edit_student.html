@@ -26,11 +26,11 @@
             </ul>
 
             {% if account_setup %}
-                <form action="{% url 'course_setup_account' link_id=link.id %}" method="post">
+                <form action="{% url 'course_setup_account' link_id=link.id %}" method="post" id="account-setup-form">
             {% elif student %}
-                <form action="{% url 'course_edit_student' student_uuid=student.uuid %}" method="post">
+                <form action="{% url 'course_edit_student' student_uuid=student.uuid %}" method="post" id="edit-student-form">
             {% else %}
-                <form action="{% url 'course_new_student' course_handle=course_handle %}" method="post">
+                <form action="{% url 'course_new_student' course_handle=course_handle %}" method="post" id="new-student-form">
             {% endif %}
                 {% csrf_token %}
 
@@ -61,15 +61,20 @@
                         </div>
                     </dd>
                 </dl>
-
-                {% if account_setup %}
-                    <button>Setup account</button>
-                {% elif student %}
-                    <button>Save changes</button>
-                {% else %}
-                    <button>Create student</button>
-                {% endif %}
             </form>
+
+            <form action="{% if next %}{{ next }}{% else %}{% url 'home' %}{% endif %}" method="get" id="back-form"></form>
+
+            <p>
+                <button form="back-form">Back</button>
+                {% if account_setup %}
+                    <button form="account-setup-form">Setup account</button>
+                {% elif student %}
+                    <button form="edit-student-form">Save changes</button>
+                {% else %}
+                    <button form="new-student-form">Create student</button>
+                {% endif %}
+            </p>
         </div>
     </div>
 
