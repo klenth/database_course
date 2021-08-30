@@ -18,6 +18,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 
 from course import views as course_views
+from accounts import views as accounts_views
 from . import settings
 
 urlpatterns = [
@@ -33,8 +34,9 @@ urlpatterns = [
     path('accounts/password_change_done/', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
     path('accounts/password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
     path('accounts/password_reset_done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
-    path('accounts/password_reset_confirm/<str:uidb64>/<str:token>/', auth_views.PasswordResetConfirmView.as_view(),
-         name='password_reset_confirm'),
+#    path('accounts/password_reset_confirm/<str:uidb64>/<str:token>/', auth_views.PasswordResetConfirmView.as_view(),
+#         name='password_reset_confirm'),
+    path('accounts/password_reset_confirm/<str:uidb64>/<str:token>/', accounts_views.password_reset_confirm, name='password_reset_confirm'),
     path('accounts/password_reset_complete/', auth_views.PasswordResetCompleteView.as_view(),
          name='password_reset_complete'),
 
