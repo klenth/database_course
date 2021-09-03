@@ -118,7 +118,16 @@ def canvas_push_grades(request, assignment_id):
         canvas_student.canvas_id: {
             'score': canvas_student.student.score_on_lab(assignment.lab),
         }
-        for canvas_student in CanvasStudent.objects.filter(student__enrollment__course=assignment.lab.course, student__enrollment__active=True)
+        for canvas_student in CanvasStudent.objects.filter(
+            student__enrollment__course=assignment.lab.course, student__enrollment__active=True)
+    }
+
+    # Keep only the entries with positive grade
+    grades = {
+        cid: {
+            'score': value['score']
+        }
+        for (cid, value) in grades.items() if value['score'] > 0
     }
 
     canvas.update_grades_if_higher(canvas_assignment=assignment, student_grades=grades)
