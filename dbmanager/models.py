@@ -421,6 +421,9 @@ class DatabaseSnapshot(models.Model):
             kwargs['database_name'] = kwargs['database'].name
         super().__init__(*args, **kwargs)
 
+    def __str__(self):
+        return f'Snapshot of {self.database_name} requested {self.request_time} by {self.student.name}'
+
     def is_active(self):
         return self.success is None
 
@@ -520,6 +523,9 @@ class DatabaseImport(models.Model):
     success = models.BooleanField(null=True, default=None)
     stdout = models.TextField(default='')
     stderr = models.TextField(default='')
+
+    def __str__(self):
+        return f'Import into database {self.database.name} from {"snapshot" if self.source_export else "file"}'
 
     @staticmethod
     def from_export(export, *args, **kwargs):
@@ -628,6 +634,9 @@ class ClassDatabase(models.Model):
     name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True)    # note: schema name at most 64 characters (must include username!)
     published = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f'{self.name} [{"published" if self.published else "unpublished"}]'
+
     @staticmethod
     def create(name, published=False, fail_on_exists=True, **kwargs):
         with get_db() as db:
@@ -699,6 +708,9 @@ class AccessToken(models.Model):
     write_permission = models.BooleanField(default=False, null=False)
     username = models.CharField(max_length=64, null=False, default=_choose_access_token_username)
     password = models.CharField(max_length=64, null=False, default=_choose_access_token_password)
+
+    def __str__(self):
+        return f'Token {self.username} for {self.database.name}'
 
     @staticmethod
     def create_token(database, write_permission=False, **kwargs):

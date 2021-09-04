@@ -8,6 +8,9 @@ class CanvasCourse(models.Model):
     canvas_id = models.CharField(max_length=32)
     auto_update_assignment_grades = models.BooleanField(null=False, default=False)
 
+    def __str__(self):
+        return f'Course {self.canvas_id} for {self.course.title}'
+
     def canvas_students(self):
         return CanvasStudent.objects.filter(student__enrollment__course=self.course)
 
@@ -16,11 +19,17 @@ class CanvasStudent(models.Model):
     student = models.OneToOneField(to=Student, null=False, on_delete=models.CASCADE, related_name='canvas_student')
     canvas_id = models.CharField(max_length=32)
 
+    def __str__(self):
+        return f'Student {self.canvas_id} ({self.student.name})'
+
 
 class CanvasAssignment(models.Model):
     lab = models.OneToOneField(to=Lab, null=False, on_delete=models.CASCADE, related_name='canvas_assignment')
     canvas_id = models.CharField(max_length=32)
     auto_update_grade = models.BooleanField(null=True, default=None)
+
+    def __str__(self):
+        return f'Assignment {self.canvas_id} ({self.lab.title})'
 
     def get_auto_update_grade(self):
         if self.auto_update_grade is not None:
