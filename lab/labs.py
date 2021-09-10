@@ -115,7 +115,7 @@ def get_database_connection(**kwargs):
     if __DB_CONNECTION:
         if not __DB_CONNECTION.is_connected():
             try:
-                __DB_CONNECTION.connect()
+                __DB_CONNECTION.reconnect(attempts=5, delay=3)
             except mysql_errors.ProgrammingError:
                 __DB_CONNECTION = None
                 return get_database_connection()

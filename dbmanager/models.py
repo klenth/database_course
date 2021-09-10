@@ -45,7 +45,8 @@ def get_db():
                 _db_connection = mysql.connect(host=db_host, port=db_port,
                                                user=admin_username, password=admin_password)
                 _db_connection.start_transaction()
-
+            elif not _db_connection.is_connected():
+                _db_connection.reconnect(attempts=5, delay=3)
             _db_depth += 1
 
             return _db_connection
