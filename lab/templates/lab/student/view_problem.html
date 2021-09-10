@@ -168,6 +168,7 @@
     const editor = ace.edit("editor");
     editor.setTheme("ace/theme/sql_lab");
     editor.session.setMode("ace/mode/sql");
+    editor.session.setUseWrapMode(true);
 
     $("#submit-button").addEventListener("click", () => {
         const text = editor.getSession().getDocument().getValue();
