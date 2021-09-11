@@ -25,8 +25,6 @@ class QueryResults:
         self.incomplete = incomplete
 
     def _str(self, x):
-        if isinstance(x, set):
-            return ','.join([str(e) for e in x])
         return str(x) if x is not None else ''
 
     def rows_match(self, other):
@@ -55,10 +53,15 @@ class QueryResults:
     def from_cursor(cursor, fetch_data=True):
         column_names = cursor.column_names
 
+        def flatten(e):
+            return ','.join([str(x) for x in e]) if isinstance(e, set) else e
+
         if fetch_data:
             # Fetch up to LAB_MAX_QUERY rows
-            # TODO: make this work with set()s returned from the cursor (and maybe other data types?)
-            rows = cursor.fetchmany(size=settings.LAB_MAX_QUERY_ROWS)
+            rows = [
+                [flatten(value) for value in row]
+                for row in cursor.fetchmany(size=settings.LAB_MAX_QUERY_ROWS)
+            ]
             incomplete = cursor.fetchone() is not None
         else:
             rows = []
