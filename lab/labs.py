@@ -25,6 +25,8 @@ class QueryResults:
         self.incomplete = incomplete
 
     def _str(self, x):
+        if isinstance(x, set):
+            return ','.join([str(e) for e in x])
         return str(x) if x is not None else ''
 
     def rows_match(self, other):
