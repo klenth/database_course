@@ -210,6 +210,7 @@ def load_test_case_data(test_case, *, cursor):
         INFILE %s
         INTO TABLE `{mapping.table_name}`
         FIELDS TERMINATED BY ','
+            OPTIONALLY SEPARATED BY '"'
         ''', (filename,))
 
     cursor.execute('SET FOREIGN_KEY_CHECKS=1')
