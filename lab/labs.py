@@ -54,7 +54,12 @@ class QueryResults:
         column_names = cursor.column_names
 
         def flatten(e):
-            return ','.join([str(x) for x in e]) if isinstance(e, set) else e
+            if isinstance(e, set):
+                values = list(str(s) for s in e)
+                values.sort()
+                return ','.join(values)
+            else:
+                return e
 
         if fetch_data:
             # Fetch up to LAB_MAX_QUERY rows
