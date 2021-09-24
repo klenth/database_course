@@ -29,7 +29,10 @@ def data_table(qr, compare_to=None, autoescape=True):
     header = '<tr>'
     for j, col in zip(range(len(qr.column_names)), qr.column_names):
         if compare_to and (len(compare_to.column_names) <= j or qr.column_names[j] != compare_to.column_names[j]):
-            header += '<th class="different">'
+            if len(compare_to.column_names) <= j:
+                header += '<th class="different" title="Too many columns">'
+            else:
+                header += f'<th class="different" title="Expected: \'{compare_to.column_names[j]}\'">'
         else:
             header += '<th>'
         header += esc(str(qr.column_names[j])) or '&nbsp;'
@@ -42,7 +45,15 @@ def data_table(qr, compare_to=None, autoescape=True):
         for j, col in zip(range(len(row)), row):
             if compare_to and (len(compare_to.rows) <= i or len(compare_to.rows[i]) <= j
                                or row[j] != compare_to.rows[i][j]):
-                body += '<td class="different">'
+                if len(compare_to.rows) <= i:
+                    body += '<td class="different" title="Too many rows">'
+                elif len(compare_to.rows[i]) <= j:
+                    body += '<td class="different" title="Too many columns">'
+                else:
+                    expected = compare_to.rows[i][j]
+                    if expected is None:
+                        expected = 'NULL'
+                    body += f'<td class="different" title="Expected: \'{expected}\'">'
             else:
                 body += '<td>'
             if row[j] is None:
