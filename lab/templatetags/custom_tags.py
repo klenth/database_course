@@ -45,7 +45,10 @@ def data_table(qr, compare_to=None, autoescape=True):
                 body += '<td class="different">'
             else:
                 body += '<td>'
-            body += esc(str(row[j])) or '&nbsp;'
+            if row[j] is None:
+                body += '<span class="sql-null">NULL</span>'
+            else:
+                body += esc(str(row[j])) or '&nbsp;'
             body += '</td>'
         body += '</tr>'
 

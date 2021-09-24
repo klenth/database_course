@@ -12,6 +12,7 @@ import uuid
 import subprocess
 import random
 import csv
+from lab.csv import CsvReader, CsvWriter
 from django.shortcuts import reverse
 from django.core.mail import EmailMessage
 
@@ -19,13 +20,21 @@ __DB_CONNECTION = None
 
 
 class QueryResults:
+    #_NULL_TAG = r'\N'       # what MySQL/MariaDB use for NULLs in CSV exports
+    #_CSV_PARAMS = {
+    #    'delimiter': ',',
+    #    'doublequote': False,
+    #    'escapechar': '\\',
+    #    'lineterminator': '\n',
+    #    'quotechar': '"',
+    #    'quoting': csv.QUOTE_MINIMAL,
+    #    'strict': False,
+    #}
+
     def __init__(self, column_names, rows, incomplete=False):
         self.column_names = column_names
         self.rows = rows
         self.incomplete = incomplete
-
-    def _str(self, x):
-        return str(x) if x is not None else ''
 
     def rows_match(self, other):
         if self is other:
@@ -37,7 +46,7 @@ class QueryResults:
         else:
             for i in range(len(self.rows)):
                 if len(self.rows[i]) != len(other.rows[i]) or \
-                        any([self._str(self.rows[i][j]) != self._str(other.rows[i][j]) for j in range(len(self.rows[i]))]):
+                        any([self.rows[i][j] != other.rows[i][j] for j in range(len(self.rows[i]))]):
                     return False
             return True
 
@@ -45,7 +54,7 @@ class QueryResults:
         if self is other:
             return True
         elif len(self.column_names) != len(other.column_names) or \
-                any([self._str(self.column_names[i]) != self._str(other.column_names[i]) for i in range(len(self.column_names))]):
+                any([self.column_names[i] != other.column_names[i] for i in range(len(self.column_names))]):
             return False
         return True
 
@@ -54,10 +63,14 @@ class QueryResults:
         column_names = cursor.column_names
 
         def flatten(e):
-            if isinstance(e, set):
+            if e is None:
+                return e
+            elif isinstance(e, set):
                 values = list(str(s) for s in e)
                 values.sort()
                 return ','.join(values)
+            elif not isinstance(e, str):
+                return str(e)
             else:
                 return e
 
@@ -85,9 +98,17 @@ class QueryResults:
             return QueryResults.from_csv(open(file, 'r', newline=''))
 
         try:
-            reader = csv.reader(file)
+            #reader = csv.reader(file, **QueryResults._CSV_PARAMS)
+            reader = CsvReader(file)
             column_names = tuple(next(reader))
-            rows = list(tuple(row) for row in reader)
+            #rows = list(
+            #    tuple(
+            #        (
+            #            None if cell == QueryResults._NULL_TAG else cell
+            #        ) for cell in row
+            #    ) for row in reader
+            #)
+            rows = list(reader)
 
             return QueryResults(column_names, rows)
         finally:
@@ -98,10 +119,17 @@ class QueryResults:
             self.save_csv(open(out, 'w'))
 
         try:
-            writer = csv.writer(out)
+            writer = CsvWriter(out)
             writer.writerow(self.column_names)
-            for row in self.rows:
-                writer.writerow(row)
+            writer.writerows(self.rows)
+            #writer = csv.writer(out, **QueryResults._CSV_PARAMS)
+            #writer.writerow(self.column_names)
+            #for row in self.rows:
+            #    writer.writerow(
+            #        (
+            #            self._NULL_TAG if cell is None else cell
+            #        ) for cell in row
+            #    )
         finally:
             out.close()
 
