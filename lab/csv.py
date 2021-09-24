@@ -51,7 +51,7 @@ class CsvReader:
 
     @staticmethod
     def _unescape(s):
-        if s[0] == '"' and s[-1] == '"':
+        if len(s) >= 2 and s[0] == '"' and s[-1] == '"':
             s = s[1:-1]
 
         u = ''
