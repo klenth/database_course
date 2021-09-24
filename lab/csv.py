@@ -18,8 +18,10 @@ class CsvReader:
 
         start_index = 0
         fields = []
-        while start_index < len(line):
-            end_index = self._find_next_field(line, start_index) or len(line)
+        while start_index <= len(line):
+            end_index = self._find_next_field(line, start_index)
+            if end_index is None:
+                end_index = len(line)
             field_raw = line[start_index:end_index]
 
             if field_raw == '\\N':
