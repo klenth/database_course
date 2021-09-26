@@ -106,11 +106,12 @@ def view_lab(request, lab_id):
         raise Http404
 
     canvas_enabled = apps.is_installed('lms') and CanvasCourse.objects.filter(course=lab.course).exists()
+    lab_problems = lab.problems.order_by('problemonlab__problem_number')
 
     context = {
         'lab': lab,
-        'enabled_problems': lab.problems.filter(enabled=True),
-        'disabled_problems': lab.problems.filter(enabled=False),
+        'enabled_problems': lab_problems.filter(enabled=True),
+        'disabled_problems': lab_problems.filter(enabled=False),
         'student_href': reverse('student_view_lab', kwargs={'lab_id': lab.id}),
         'canvas_integration_enabled': canvas_enabled,
     }
