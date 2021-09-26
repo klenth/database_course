@@ -578,6 +578,7 @@
                 const response = JSON.parse(responseText);
                 if (response.html) {
                     const display = document.createElement("div");
+                    display.classList.add("problem-prompt");
                     display.innerHTML = response.html;
                     showModal(display, { "title": "Preview" });
                 }
