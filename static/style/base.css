@@ -662,6 +662,13 @@ input[type=number] {
 
 ul.attempts-list {
     list-style-type: none;
+    position: absolute;
+    background-color: white;
+    height: 200px;
+    width: 320px;
+    overflow-y: auto;
+    margin-top: 0;
+    border: 1px solid var(--color-sky);
 }
 
 ul.attempts-list .score {
