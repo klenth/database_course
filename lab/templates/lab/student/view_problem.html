@@ -23,7 +23,28 @@
 {% endblock %}
 
 {% block content %}
-    <div class="cards">
+    <div class="nav sidebar">
+        <ol class="problem-links">
+            {% for nav_problem in problem.lab.enabled_problems %}
+                <li
+                    {% if nav_problem == problem %}
+                        class="current"
+                    {% endif %}
+                >
+                    <div class="problem-points">
+                        {{ student|scoreonproblem:problem|floatformat }}
+                        <span style="font-size: 0.9rem;">/{{ problem.possible_points|floatformat }}</span>
+                    </div>
+                    <a href="{% url 'student_view_problem' problem_id=nav_problem.id %}">
+                        {{ nav_problem.title }}
+                        <br/>
+                    </a>
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <div class="cards with-sidebar">
         <div class="card">
             <div class="title">{{ problem.title }}</div>
 

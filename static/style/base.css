@@ -255,6 +255,7 @@ html {
 body {
     background-color: var(--color-night);
     --nav-height: 50px;
+    --sidebar-width: 240px;
 }
 
 nav {
@@ -326,6 +327,10 @@ main {
 .cards {
     padding: 32px;
     padding-bottom: 256px;
+}
+
+.cards.with-sidebar {
+    margin-left: var(--sidebar-width);
 }
 
 .card {
@@ -980,6 +985,90 @@ table.canvas-courses input[type="text"]:hover, table.canvas-courses input[type="
     font-size: 0.9rem;
     font-family: 'Hack',monospace;
     cursor: default;
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    width: var(--sidebar-width);
+    top: var(--nav-height);
+    bottom: 0;
+    background: var(--color-offwhite);
+    overflow-y: auto;
+}
+
+ol.problem-links {
+    margin-top: 64px;
+    list-style-type: none;
+}
+
+ol.problem-links li {
+    position: relative;
+    isolation: isolate;
+    z-index: 1;
+    margin: 16px 0;
+    margin-right: 16px;
+}
+
+ol.problem-links li a {
+    color: white;
+}
+
+ol.problem-links li::before {
+    content: "";
+    background-color: var(--color-thistle);
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    right: -48px;
+    top: 0;
+    bottom: 0;
+    transform: skewX(-15deg);
+    border-radius: 4px 0 0 4px;
+    transition: background-color 0.2s;
+}
+
+ol.problem-links li:hover::before, ol.problem-links li.current::before {
+    background-color: var(--color-sky);
+    border-color: var(--color-sky);
+}
+
+ol.problem-links li.current {
+    left: 32px;
+}
+
+ol.problem-links li a, ol-problem-links li a:visited {
+    position: relative;
+    display: block;
+    padding: 16px 16px 24px 16px;
+    text-decoration: none !important;
+    color: white;
+    font-weight: bold;
+    z-index: 1;
+    user-select: none;
+}
+
+ol.problem-links li .problem-points {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    color: white;
+    font-weight: 700;
+}
+
+ol.problem-links li.current .problem-points {
+    right: 32px;
+}
+
+@media screen and (max-width: 768px),
+        screen and (max-aspect-ratio: 1.0) {
+    .sidebar {
+        display: none;
+    }
+
+    body {
+        --sidebar-width: 0;
+    }
 }
 
 @font-face {

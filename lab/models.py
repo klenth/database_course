@@ -301,10 +301,10 @@ class Lab(models.Model):
         pol.save()
 
     def enabled_problems(self):
-        return self.problems.filter(enabled=True)
+        return self.problems.order_by('problemonlab__problem_number').filter(enabled=True)
 
     def total_points(self):
-        return self.problems.filter(enabled=True).aggregate(total_points=models.Sum('test_cases__points'))['total_points'] or 0
+        return self.problems.order_by('problemonlab__problem_number').filter(enabled=True).aggregate(total_points=models.Sum('test_cases__points'))['total_points'] or 0
 
     def enabled_problem_count(self):
         return self.enabled_problems().count()
