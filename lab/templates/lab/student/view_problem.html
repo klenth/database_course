@@ -32,8 +32,8 @@
                     {% endif %}
                 >
                     <div class="problem-points">
-                        {{ student|scoreonproblem:problem|floatformat }}
-                        <span style="font-size: 0.9rem;">/{{ problem.possible_points|floatformat }}</span>
+                        {{ student|scoreonproblem:nav_problem|floatformat }}
+                        <span style="font-size: 0.9rem;">/{{ nav_problem.possible_points|floatformat }}</span>
                     </div>
                     <a href="{% url 'student_view_problem' problem_id=nav_problem.id %}">
                         {{ nav_problem.title }}
