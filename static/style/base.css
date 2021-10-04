@@ -1040,7 +1040,7 @@ ol.problem-links li.current {
 ol.problem-links li a, ol-problem-links li a:visited {
     position: relative;
     display: block;
-    padding: 16px 16px 24px 16px;
+    padding: 16px;
     text-decoration: none !important;
     color: white;
     font-weight: bold;
@@ -1054,6 +1054,7 @@ ol.problem-links li .problem-points {
     bottom: 0;
     color: white;
     font-weight: 700;
+    opacity: 60%;
 }
 
 ol.problem-links li.current .problem-points {
