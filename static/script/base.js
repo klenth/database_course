@@ -204,6 +204,32 @@ let showModal = null;
     }
 
     showModal = showModalImpl;
+
+    $$(".sidebar-collapse-thumb").forEach(thumb => {
+        const SIDEBAR_COLLAPSED_KEY = "database-course.sidebar-collapsed";
+        console.debug(localStorage.getItem(SIDEBAR_COLLAPSED_KEY));
+        if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true") {
+            document.body.classList.remove("sidebar-shown");
+            thumb.classList.add("collapsed");
+        } else {
+            document.body.classList.add("sidebar-shown");
+            thumb.classList.remove("collapsed");
+        }
+
+        thumb.addEventListener("click", () => {
+            console.debug("Originally " + localStorage.getItem(SIDEBAR_COLLAPSED_KEY));
+            if (thumb.classList.contains("collapsed")) {
+                document.body.classList.add("sidebar-shown");
+                thumb.classList.remove("collapsed");
+                localStorage.setItem(SIDEBAR_COLLAPSED_KEY, "false");
+            } else {
+                document.body.classList.remove("sidebar-shown");
+                thumb.classList.add("collapsed");
+                localStorage.setItem(SIDEBAR_COLLAPSED_KEY, "true");
+            }
+            console.debug("Became " + localStorage.getItem(SIDEBAR_COLLAPSED_KEY));
+        });
+    });
 })();
 
 function showModalMessage(text, params) {

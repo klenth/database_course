@@ -23,26 +23,6 @@
 {% endblock %}
 
 {% block content %}
-    <div class="nav sidebar">
-        <ol class="problem-links">
-            {% for nav_problem in problem.lab.enabled_problems %}
-                <li
-                    {% if nav_problem == problem %}
-                        class="current"
-                    {% endif %}
-                >
-                    <div class="problem-points">
-                        {{ student|scoreonproblem:nav_problem|floatformat }}<span style="font-size: 0.8rem;">/{{ nav_problem.possible_points|floatformat }}</span>
-                    </div>
-                    <a href="{% url 'student_view_problem' problem_id=nav_problem.id %}">
-                        {{ nav_problem.title }}
-                        <br/>
-                    </a>
-                </li>
-            {% endfor %}
-        </ol>
-    </div>
-
     <div class="cards with-sidebar">
         <div class="card">
             <div class="title">{{ problem.title }}</div>
@@ -179,6 +159,31 @@
             </div>
         {% endif %}
     </div>
+
+    <div class="nav sidebar">
+        <ol class="problem-links">
+            {% for nav_problem in problem.lab.enabled_problems %}
+                <li
+                    {% if nav_problem == problem %}
+                        class="current"
+                    {% endif %}
+                >
+                    <div class="problem-points">
+                        {{ student|scoreonproblem:nav_problem|floatformat }}<span style="font-size: 0.8rem;">/{{ nav_problem.possible_points|floatformat }}</span>
+                    </div>
+                    <a href="{% url 'student_view_problem' problem_id=nav_problem.id %}">
+                        {{ nav_problem.title }}
+                        <br/>
+                    </a>
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+
+
+    <div class="collapse-thumb sidebar-collapse-thumb" title="Toggle navigation menu"></div>
+
+
 
     <script src="{% static 'script/ace/ace.js' %}"></script>
     <script src="{% static 'script/base.js' %}"></script>

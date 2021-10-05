@@ -255,6 +255,10 @@ html {
 body {
     background-color: var(--color-night);
     --nav-height: 50px;
+    --sidebar-width: 0;
+}
+
+body.sidebar-shown {
     --sidebar-width: 240px;
 }
 
@@ -331,6 +335,7 @@ main {
 
 .cards.with-sidebar {
     margin-left: var(--sidebar-width);
+    transition: margin-left 0.2s;
 }
 
 .card {
@@ -990,11 +995,23 @@ table.canvas-courses input[type="text"]:hover, table.canvas-courses input[type="
 .sidebar {
     position: fixed;
     left: 0;
-    width: var(--sidebar-width);
+    /*width: var(--sidebar-width);*/
+    width: 240px;
     top: var(--nav-height);
     bottom: 0;
     background: var(--color-offwhite);
     overflow-y: auto;
+    overflow-x: hidden;
+    /*transition: width 0.2s;*/
+    transform-origin: right top;
+    transition: transform 0.2s, visibility 0.2s;
+    transform: rotate(90deg);
+    visibility: hidden;
+}
+
+.sidebar-shown .sidebar {
+    transform: rotate(0);
+    visibility: visible;
 }
 
 ol.problem-links {
@@ -1059,6 +1076,52 @@ ol.problem-links li .problem-points {
 
 ol.problem-links li.current .problem-points {
     right: 32px;
+}
+
+.collapse-thumb {
+    position: fixed;
+    left: var(--sidebar-width);
+    width: 10px;
+    height: 64px;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    background-color: var(--color-sky);
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    transition: transform 0.2s, margin 0.2s, left 0.2s, top 0.2s;
+    transform-origin: left top;
+}
+
+.collapse-thumb::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -6px;
+    bottom: 0;
+    transform: skewY(15deg);
+    background-color: var(--color-sky);
+    border-radius: 0 4px 0 0;
+}
+
+.collapse-thumb::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: -6px;
+    transform: skewY(-15deg);
+    background-color: var(--color-sky);
+    border-radius: 0 0 4px 0;
+}
+
+.collapse-thumb.collapsed {
+    left: 96px;
+    top: var(--nav-height);
+    transform: rotate(90deg);
+    margin: 0;
 }
 
 @media screen and (max-width: 768px),
