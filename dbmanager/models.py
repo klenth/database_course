@@ -253,7 +253,7 @@ class StudentDatabase(models.Model):
             cursor.execute("""SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = %s""",
                            (self.name,))
             for (count,) in cursor:
-                self._saved_is_deleted = count() == 0
+                self._saved_is_deleted = count == 0
                 return self._saved_is_deleted
 
     def share_with(self, student, write_permission=False):
