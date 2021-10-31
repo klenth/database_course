@@ -87,8 +87,9 @@ Please click the link below to set up your account:
 class Stopwatch:
     from time import time
 
-    def __init__(self, label=None):
+    def __init__(self, label=None, output=print):
         self.label = label
+        self.output = output
         self.timestamp = Stopwatch.time()
 
     def __enter__(self, *args, **kwargs):
@@ -99,6 +100,6 @@ class Stopwatch:
 
     def print(self):
         if self.label:
-            print(f'{self.label} {self.time() - self.timestamp:.3f} seconds elapsed')
+            self.output(f'{self.label} {self.time() - self.timestamp:.3f} seconds elapsed')
         else:
-            print(f'{self.time() - self.timestamp:.3f} seconds elapsed')
+            self.output(f'{self.time() - self.timestamp:.3f} seconds elapsed')
