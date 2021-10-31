@@ -82,3 +82,23 @@ Please click the link below to set up your account:
         body += f'\n\nPlease contact {instructor.name} at {instructor.email} if you have any questions.'
 
     send_mail(subject=subject, message=body, from_email=SYSTEM_EMAIL, recipient_list=(email,), fail_silently=False)
+
+
+class Stopwatch:
+    from time import time
+
+    def __init__(self, label=None):
+        self.label = label
+        self.timestamp = Stopwatch.time()
+
+    def __enter__(self, *args, **kwargs):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.print()
+
+    def print(self):
+        if self.label:
+            print(f'{self.label} {self.time() - self.timestamp:.3f} seconds elapsed')
+        else:
+            print(f'{self.time() - self.timestamp:.3f} seconds elapsed')
