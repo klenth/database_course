@@ -58,8 +58,8 @@ def get_db():
             _db_depth -= 1
             if _db_depth == 0:
                 _db_connection.commit()
-                _db_connection.close()
-                _db_connection = None
+                #_db_connection.close()
+                #_db_connection = None
 
     return DBWrapper()
 
