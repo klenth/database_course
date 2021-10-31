@@ -174,6 +174,7 @@ class StudentDatabase(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._saved_table_names = None
+        self._saved_is_deleted = None
 
     @staticmethod
     def create(student, course, db_name):
@@ -245,12 +246,15 @@ class StudentDatabase(models.Model):
             return self.get_table_names()
 
     def is_deleted(self):
+        if self._saved_is_deleted is not None:
+            return self._saved_is_deleted
         with get_db() as db:
             cursor = db.cursor()
             cursor.execute("""SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = %s""",
                            (self.name,))
             for (count,) in cursor:
-                return count == 0
+                self._saved_is_deleted = count() == 0
+                return self._saved_is_deleted
 
     def share_with(self, student, write_permission=False):
         proxy = DatabaseProxyUser.proxy_for(student)
