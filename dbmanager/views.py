@@ -177,16 +177,6 @@ def student_course_home(request, course_handle):
         'new_db_errors': [],
     }
 
-    if student:
-        #context['databases'] = student.databases.all().order_by('name')
-        #context['other_databases'] = student.shared_databases.order_by('database__owner__username', 'database__name')
-
-        for db in student.databases.all():
-            try:
-                db.get_table_names()
-            except DatabaseDeletedError:
-                print(f"Database {db.name} has been deleted")
-
     if request.method == 'POST':
         if 'action' in request.POST and request.POST['action'] == 'new_database':
             if request.POST.get('database_name', None):
