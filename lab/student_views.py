@@ -171,7 +171,7 @@ f{str(e)}'''
         selected_attempt = None
         if attempt_id:
             selected_attempt = get_object_or_404(ProblemAttempt, id=attempt_id)
-            if selected_attempt.student != student:
+            if selected_attempt.student.pk != student.pk:
                 raise Http404
         elif attempts:
             selected_attempt = attempts[-1]
