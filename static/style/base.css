@@ -1130,7 +1130,11 @@ ol.problem-links li.current .problem-points {
         display: none;
     }
 
-    body {
+    .collapse-thumb {
+        display: none;
+    }
+
+    body.sidebar-shown {
         --sidebar-width: 0;
     }
 }
