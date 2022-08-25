@@ -669,6 +669,7 @@ class ClassDatabase(models.Model):
         with get_db() as db:
             cursor = db.cursor()
             for student in self.course.students.all():
+                cursor.execute("""CREATE USER IF NOT EXISTS %s@'localhost'""", (student.username,))
                 cursor.execute("""GRANT SELECT ON `{}`.* TO %s@'localhost'""".format(self.name),
                                (student.username,))
                 proxy = DatabaseProxyUser.proxy_for(student)
