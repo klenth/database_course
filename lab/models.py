@@ -312,11 +312,21 @@ class Lab(models.Model):
     def disabled_problem_count(self):
         return self.problems.filter(enabled=False).count()
 
-    def duplicate(self):
-        new_title = util.unique_duplicate_name(self.title, [lab.title for lab in self.course.labs.all()])
+    def duplicate(self, title=None, course=None):
+        """Duplicates this lab (including all problems), possibly with a given title or course.
+            Optional arguments:
+                title -  the title for the duplicate lab (by default, generates a unique title such as 'Copy of X')
+                course - the course that the new lab should be part of (by default, the same coursea as the original)"""
+
+        new_title = title
+        if new_title is None:
+            new_title = util.unique_duplicate_name(self.title, [lab.title for lab in self.course.labs.all()])
+
+        if course is None:
+            course = self.course
 
         new_lab = Lab(
-            course=self.course,
+            course=course,
             title=new_title,
         )
         new_lab.save()
