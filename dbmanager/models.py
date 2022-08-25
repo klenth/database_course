@@ -636,8 +636,13 @@ class DatabaseImport(models.Model):
 class ClassDatabase(models.Model):
     MAX_NAME_LENGTH = 64
     course = models.ForeignKey(to=Course, null=False, on_delete=models.CASCADE)
-    name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True)    # note: schema name at most 64 characters (must include username!)
+    name = models.CharField(max_length=MAX_NAME_LENGTH)    # note: schema name at most 64 characters (must include username!)
     published = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(name='class_database_unique', fields=('course', 'name')),
+        )
 
     def __str__(self):
         return f'{self.name} [{"published" if self.published else "unpublished"}]'
