@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.views.decorators import csrf as csrf_decorators
 from django.http import Http404, HttpResponse
 import django.contrib.auth.decorators as auth_decorators
+
+import lms.canvas
 from .models import *
 from lms.models import CanvasCourse, CanvasAssignment
 from django.apps import apps
@@ -121,6 +123,48 @@ def view_lab(request, lab_id):
         context['canvas_assignment'] = maybe_canvas_assignment.get() if maybe_canvas_assignment.exists() else None
 
     return render(request, 'lab/instructor/view_lab.html', context)
+
+
+@auth_decorators.login_required
+def link_lab_to_canvas_assignment(request, lab_id):
+    instructor = get_object_or_404(Instructor, id=request.user.id)
+    lab = get_object_or_404(Lab, pk=lab_id)
+
+    if lab.course.instructor != instructor:
+        raise Http404
+
+    canvas_course = apps.is_installed('lms') and CanvasCourse.objects.filter(course=lab.course).get()
+
+    context = {
+        'lab': lab,
+        'canvas_course': canvas_course,
+        'errors': [],
+    }
+
+    if request.method == 'POST':
+        if 'unlink_canvas_assignment_id' in request.POST:
+            maybe_canvas_assignment = CanvasAssignment.objects.filter(pk=request.POST['unlink_canvas_assignment_id'])
+            if maybe_canvas_assignment.exists() and (canvas_assignment := maybe_canvas_assignment.get()).lab.id == lab.id:
+                canvas_assignment.delete()
+            return redirect('instructor_view_lab', lab_id=lab.id)
+
+        elif 'canvas_assignment_id' not in request.POST:
+            context['errors'].append('No Canvas assignment ID given')
+
+        else:
+            canvas_assignment = CanvasAssignment(
+                lab=lab,
+                canvas_id=request.POST['canvas_assignment_id']
+            )
+            canvas_assignment.save()
+
+            return redirect('instructor_view_lab', lab_id=lab.id)
+
+    else:
+        assignments = lms.canvas.download_assignments_for_course(canvas_course)
+        context['canvas_assignments'] = assignments
+
+    return render(request, 'lab/instructor/link_lab_to_canvas_assignment.html', context)
 
 
 @auth_decorators.login_required

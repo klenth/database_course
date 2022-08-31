@@ -21,6 +21,7 @@ urlpatterns = [
     path('i/c/<slug:course_handle>/lab/new', instructor_views.edit_lab, name='instructor_new_lab'),
     path('i/c/<slug:course_handle>/lab/<uuid:lab_id>/edit', instructor_views.edit_lab, name='instructor_edit_lab'),
     path('i/lab/<uuid:lab_id>', instructor_views.view_lab, name='instructor_view_lab'),
+    path('i/lab/<uuid:lab_id>/link_to_canvas', instructor_views.link_lab_to_canvas_assignment, name='instructor_link_lab_to_canvas_assignment'),
     path('i/lab/<uuid:lab_id>/new_problem', instructor_views.new_problem, name='instructor_new_problem'),
     path('i/lab/p/<uuid:problem_id>', instructor_views.view_problem, name='instructor_view_problem'),
     path('i/lab/p/<uuid:problem_id>/schema', instructor_views.download_schema, name='instructor_download_schema'),

@@ -28,7 +28,12 @@
 
                 {% if canvas_assignment %}
                     <p>
-                        Linked to <a href="{{ canvas_assignment|canvas_assignment_url }}">Canvas assignment</a>
+                        Linked to <a href="{{ canvas_assignment|canvas_assignment_url }}">Canvas assignment</a> <br/>
+                        <form action="{% url 'instructor_link_lab_to_canvas_assignment' lab_id=lab.id %}" method="post" class="indented">
+                            {% csrf_token %}
+                            <input type="hidden" name="unlink_canvas_assignment_id" value="{{ canvas_assignment.id }}">
+                            <button type="submit">Unlink</button>
+                        </form>
                     </p>
                     <p>
                         <form action="{% url 'set_canvas_assignment_auto_update_grade' assignment_id=canvas_assignment.id %}" method="post">
@@ -45,7 +50,9 @@
                         </form>
                     </p>
                 {% else %}
-
+                    <form action="{% url 'instructor_link_lab_to_canvas_assignment' lab_id=lab.id %}" method="get">
+                        <button>Link lab to Canvas assignment</button>
+                    </form>
                 {% endif %}
             {% endif %}
         </div>

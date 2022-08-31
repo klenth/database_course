@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block breadcrumbs %}
+    <span class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'lab_home' %}">Labs</a>
+    </span>
+    <span class="breadcrumb">
+        {{ lab.course.title }}
+    </span>
+    <span class="breadcrumb">
+        <a href="{% url 'instructor_view_lab' lab_id=lab.id %}">{{ lab.title }}</a>
+    </span>
+    <span class="breadcrumb">
+        Link to Canvas assignment
+    </span>
+{% endblock %}
+
+{% block content %}
+    <div class="cards">
+        <div class="card">
+            <div class="title">Link to Canvas assignment</div>
+
+            <ul class="errorlist">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+
+            <form action="" method="post" class="indented">
+                {% csrf_token %}
+
+                {% for assignment in canvas_assignments %}
+                     <label>
+                        <input type="radio" name="canvas_assignment_id" value="{{ assignment.canvas_id }}">
+                        {{ assignment.title }} (<a href="{{ assignment.url }}" target="_blank">view</a>)
+                     </label> <br/>
+                {% endfor %}
+
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
