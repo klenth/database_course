@@ -147,14 +147,26 @@ def path_for_uploaded_file(filename):
 
 
 def get_database_connection(**kwargs):
-    return mysql.connector.connect(
-        pool_name='sql_lab',
-        user=settings.LAB_DB_USER,
-        password=settings.LAB_DB_PASSWORD,
-        host=settings.LAB_DB_HOST,
-        allow_local_infile=True,
-        **kwargs
-    )
+    class ConnectionWrapper:
+        def __init__(self):
+            self.conn = None
+
+        def __enter__(self):
+            self.conn = mysql.connector.connect(
+                pool_name='sql_lab',
+                user=settings.LAB_DB_USER,
+                password=settings.LAB_DB_PASSWORD,
+                host=settings.LAB_DB_HOST,
+                allow_local_infile=True,
+                **kwargs
+            )
+
+            return self.conn
+
+        def __exit__(self, *args, **kwargs):
+            self.conn.close()
+
+    return ConnectionWrapper()
 
 
 def unique_database_name(prefix):
