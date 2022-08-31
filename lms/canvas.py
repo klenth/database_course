@@ -156,6 +156,8 @@ def update_enrollment(canvas_course):
             logging.info(f'\t→ Adding new Student and CanvasStudent {name} ({canvas_id}) / {login_id}')
             new_student = Student(name=name, sortable_name=sortable_name, username=login_id, email=email)
             new_student.save()
+            new_canvas_student = CanvasStudent(student=new_student, canvas_id=canvas_id)
+            new_canvas_student.save()
             student = new_student
 
         elif canvas_id not in known_students:
