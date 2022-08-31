@@ -16,6 +16,8 @@ from lab.csv import CsvReader, CsvWriter
 from django.shortcuts import reverse
 from django.core.mail import EmailMessage
 
+__DB_CONNECTION = None
+
 
 class QueryResults:
     #_NULL_TAG = r'\N'       # what MySQL/MariaDB use for NULLs in CSV exports
@@ -147,26 +149,23 @@ def path_for_uploaded_file(filename):
 
 
 def get_database_connection(**kwargs):
-    class ConnectionWrapper:
-        def __init__(self):
-            self.conn = None
+    global __DB_CONNECTION
+    if __DB_CONNECTION:
+        if not __DB_CONNECTION.is_connected():
+            try:
+                __DB_CONNECTION.reconnect(attempts=5, delay=3)
+            except mysql_errors.ProgrammingError:
+                __DB_CONNECTION = None
+                return get_database_connection()
 
-        def __enter__(self):
-            self.conn = mysql.connector.connect(
-                pool_name='sql_lab',
-                user=settings.LAB_DB_USER,
-                password=settings.LAB_DB_PASSWORD,
-                host=settings.LAB_DB_HOST,
-                allow_local_infile=True,
-                **kwargs
-            )
-
-            return self.conn
-
-        def __exit__(self, *args, **kwargs):
-            self.conn.close()
-
-    return ConnectionWrapper()
+        return __DB_CONNECTION
+    else:
+        __DB_CONNECTION = mysql.connector.connect(user=settings.LAB_DB_USER,
+                                                  password=settings.LAB_DB_PASSWORD,
+                                                  host=settings.LAB_DB_HOST,
+                                                  allow_local_infile=True,
+                                                  **kwargs)
+        return __DB_CONNECTION
 
 
 def unique_database_name(prefix):
