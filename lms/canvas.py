@@ -87,6 +87,32 @@ def download_courses():
     return courses
 
 
+def download_assignments_for_course(canvas_course):
+    logging.info(f'Downloading assignments for {canvas_course.course.title}')
+
+    assignment_data = canvas_paginated_request(f'courses/{canvas_course.canvas_id}/assignments')
+    assignments = [
+        {
+            'canvas_id': str(assignment['id']),
+            'title': assignment['name'],
+            'url': assignment['html_url'],
+            'group_id': assignment['assignment_group_id'],
+            'position_within_group': assignment['position'],
+            'points_possible': assignment['points_possible'],
+        }
+        for assignment in assignment_data
+    ]
+
+    preexisting_canvas_ids = set()
+    for preexisting_assignment in CanvasAssignment.objects.filter(lab__course__id=canvas_course.course.id):
+        preexisting_canvas_ids.add(str(preexisting_assignment.canvas_id))
+
+    assignments = list(filter(lambda a: a['canvas_id'] not in preexisting_canvas_ids, assignments))
+    assignments.sort(key=lambda a: (a['group_id'], a['position_within_group']))
+
+    return assignments
+
+
 def update_enrollment(canvas_course):
     logging.info(f'Updating enrollment for {canvas_course.course.title}')
     student_data = canvas_paginated_request(f'courses/{canvas_course.canvas_id}/users?enrollment_type[]=student')
