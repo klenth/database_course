@@ -290,6 +290,7 @@ class Lab(models.Model):
         constraints = (
             models.UniqueConstraint(fields=('course', 'title'), name='lab_title_unique'),
         )
+        ordering = ('-enabled', 'creation_date',)
 
     def __str__(self):
         return self.title
