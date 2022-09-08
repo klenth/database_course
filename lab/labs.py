@@ -1,13 +1,15 @@
+import logging
 import string
 
 from django.core.files import storage
 
+import lab.util
 from . import models, errors
 from lab import settings
 
 from threading import Thread
-import mysql.connector
-from mysql.connector import errors as mysql_errors
+
+import mariadb
 import uuid
 import subprocess
 import random
@@ -16,8 +18,7 @@ from lab.csv import CsvReader, CsvWriter
 from django.shortcuts import reverse
 from django.core.mail import EmailMessage
 
-__DB_CONNECTION = None
-
+__DB_CONNECTION_POOL = None
 
 class QueryResults:
     #_NULL_TAG = r'\N'       # what MySQL/MariaDB use for NULLs in CSV exports
@@ -60,7 +61,7 @@ class QueryResults:
 
     @staticmethod
     def from_cursor(cursor, fetch_data=True):
-        column_names = cursor.column_names
+        column_names = list(d[0] for d in cursor.description)
 
         def flatten(e):
             if e is None:
@@ -86,9 +87,10 @@ class QueryResults:
             incomplete = False
 
         # Discard any remaining results
-        while True:
-            if not cursor.fetchone():
-                break
+        # Not necessary for MariaDB?
+        # while True:
+        #     if not cursor.fetchone():
+        #         break
 
         return QueryResults(column_names, rows, incomplete)
 
@@ -149,23 +151,24 @@ def path_for_uploaded_file(filename):
 
 
 def get_database_connection(**kwargs):
-    global __DB_CONNECTION
-    if __DB_CONNECTION:
-        if not __DB_CONNECTION.is_connected():
-            try:
-                __DB_CONNECTION.reconnect(attempts=5, delay=3)
-            except mysql_errors.ProgrammingError:
-                __DB_CONNECTION = None
-                return get_database_connection()
-
-        return __DB_CONNECTION
+    global __DB_CONNECTION_POOL
+    if __DB_CONNECTION_POOL:
+        try:
+            return __DB_CONNECTION_POOL.get_connection()
+        except mariadb.PoolError as e:
+            logging.error(str(e))
+            __DB_CONNECTION_POOL = None
+            raise RuntimeError(e)
     else:
-        __DB_CONNECTION = mysql.connector.connect(user=settings.LAB_DB_USER,
-                                                  password=settings.LAB_DB_PASSWORD,
-                                                  host=settings.LAB_DB_HOST,
-                                                  allow_local_infile=True,
-                                                  **kwargs)
-        return __DB_CONNECTION
+        __DB_CONNECTION_POOL = mariadb.ConnectionPool(
+            user=settings.LAB_DB_USER,
+            password=settings.LAB_DB_PASSWORD,
+            host=settings.LAB_DB_HOST,
+            local_infile=True,
+            pool_name='sql-lab',
+            pool_size=8,
+            **kwargs)
+        return get_database_connection()
 
 
 def unique_database_name(prefix):
@@ -178,7 +181,7 @@ def create_database(db_name, *, cursor, error_if_exists=True):
             cursor.execute(f'CREATE DATABASE IF NOT EXISTS `{db_name}`')
         else:
             cursor.execute(f'CREATE DATABASE `{db_name}`')
-    except mysql_errors.Error as e:
+    except mariadb.Error as e:
         raise errors.SqlError(e.msg)
 
 
@@ -188,7 +191,7 @@ def drop_database(db_name, *, cursor, error_if_not_exists=True):
             cursor.execute(f'DROP DATABASE IF EXISTS `{db_name}`')
         else:
             cursor.execute(f'DROP DATABASE `{db_name}`')
-    except mysql_errors.Error as e:
+    except mariadb.Error as e:
         raise errors.SqlError(e.msg)
 
 
@@ -272,22 +275,31 @@ def compute_results(problem):
                     load_test_case_data(test_case, cursor=c)
                     conn.commit()
 
-                    for result in c.execute(problem.solution, multi=True):
-                        if result.with_rows:
-                            results = QueryResults.from_cursor(result, fetch_data=fetch_data)
+                    #for result in c.execute(problem.solution, multi=True):
+                    #    if result.with_rows:
+                    #        results = QueryResults.from_cursor(result, fetch_data=fetch_data)
+                    for statement in lab.util.separate_mysql_statements(problem.solution):
+                        c.execute(statement, buffered=False)
+                        results = QueryResults.from_cursor(c)
+
                     conn.commit()
 
+                    # if problem.after_code:
+                    #     for result in c.execute(problem.after_code, multi=True):
+                    #         if result.with_rows:
+                    #             results = QueryResults.from_cursor(result, fetch_data=fetch_data)
                     if problem.after_code:
-                        for result in c.execute(problem.after_code, multi=True):
-                            if result.with_rows:
-                                results = QueryResults.from_cursor(result, fetch_data=fetch_data)
+                        for statement in lab.util.separate_mysql_statements(problem.after_code):
+                            c.execute(statement, buffered=False)
+                            results = QueryResults.from_cursor(c)
+
                     conn.commit()
 
                     if results is None:
                         raise errors.ProblemError('No results from instructor query')
                     elif results.incomplete:
                         raise errors.ProblemError(f'Instructor query resulted in too many rows (more than {settings.LAB_MAX_QUERY_ROWS})')
-                except mysql_errors.Error as e:
+                except mariadb.Error as e:
                     raise errors.ProblemError(e.msg)
 
             results.save_csv_filefield(test_case.result_data_file, name=str(uuid.uuid1()))
@@ -312,26 +324,37 @@ def score_test_case(attempt, test_case):
                 load_schema(test_case.problem.schema, db_name=db.name)
                 load_test_case_data(test_case, cursor=c)
                 conn.commit()
-            except mysql_errors.Error as e:
+            except mariadb.Error as e:
                 raise errors.ProblemError(e.msg)
 
             try:
-                for result in c.execute(attempt.text, multi=True):
-                    if result.with_rows:
-                        student_results = QueryResults.from_cursor(result, fetch_data=fetch_data)
+                # for result in c.execute(attempt.text, multi=True):
+                #     if result.with_rows:
+                #         student_results = QueryResults.from_cursor(result, fetch_data=fetch_data)
+
+                for statement in lab.util.separate_mysql_statements(attempt.text):
+                    c.execute(statement, buffered=False)
+                    student_results = QueryResults.from_cursor(c)
+
                 conn.commit()
 
+                # if test_case.problem.after_code:
+                #     for result in c.execute(test_case.problem.after_code, multi=True):
+                #         if result.with_rows:
+                #             student_results = QueryResults.from_cursor(result, fetch_data=fetch_data)
+
                 if test_case.problem.after_code:
-                    for result in c.execute(test_case.problem.after_code, multi=True):
-                        if result.with_rows:
-                            student_results = QueryResults.from_cursor(result, fetch_data=fetch_data)
+                    for statement in lab.util.separate_mysql_statements(test_case.problem.after_code):
+                        c.execute(statement, buffered=False)
+                        student_results = QueryResults.from_cursor(c)
+
                 conn.commit()
 
                 if student_results is None:
                     raise errors.StudentCodeError('No results from student query')
                 elif student_results.incomplete:
                     raise errors.StudentCodeError(f'Student query resulted in too many rows (more than {settings.LAB_MAX_QUERY_ROWS})')
-            except mysql_errors.Error as e:
+            except mariadb.Error as e:
                 raise errors.StudentCodeError(e.msg)
 
     instr_results = QueryResults.from_csv(test_case.result_data_file.open('r'))
