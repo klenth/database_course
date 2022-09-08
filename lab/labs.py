@@ -61,6 +61,10 @@ class QueryResults:
 
     @staticmethod
     def from_cursor(cursor, fetch_data=True):
+        if cursor.description is None:
+            # No columns - no data
+            return None
+
         column_names = list(d[0] for d in cursor.description)
 
         def flatten(e):
@@ -280,7 +284,7 @@ def compute_results(problem):
                     #        results = QueryResults.from_cursor(result, fetch_data=fetch_data)
                     for statement in lab.util.separate_mysql_statements(problem.solution):
                         c.execute(statement, buffered=False)
-                        results = QueryResults.from_cursor(c)
+                        results = QueryResults.from_cursor(c) or results
 
                     conn.commit()
 
@@ -291,7 +295,7 @@ def compute_results(problem):
                     if problem.after_code:
                         for statement in lab.util.separate_mysql_statements(problem.after_code):
                             c.execute(statement, buffered=False)
-                            results = QueryResults.from_cursor(c)
+                            results = QueryResults.from_cursor(c) or results
 
                     conn.commit()
 
@@ -334,7 +338,7 @@ def score_test_case(attempt, test_case):
 
                 for statement in lab.util.separate_mysql_statements(attempt.text):
                     c.execute(statement, buffered=False)
-                    student_results = QueryResults.from_cursor(c)
+                    student_results = QueryResults.from_cursor(c) or student_results
 
                 conn.commit()
 
@@ -346,7 +350,7 @@ def score_test_case(attempt, test_case):
                 if test_case.problem.after_code:
                     for statement in lab.util.separate_mysql_statements(test_case.problem.after_code):
                         c.execute(statement, buffered=False)
-                        student_results = QueryResults.from_cursor(c)
+                        student_results = QueryResults.from_cursor(c) or student_results
 
                 conn.commit()
 
