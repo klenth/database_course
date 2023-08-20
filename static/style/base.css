@@ -777,6 +777,7 @@ ul.attempts-list .score {
 
 .test-case-result .test-case-data .data {
     max-height: 400px;
+    width: 100%;
 }
 
 .test-case-result .different {

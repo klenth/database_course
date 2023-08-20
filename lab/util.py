@@ -42,7 +42,9 @@ correctly. Returns a generator of strings."""
 
     while len(text) > 0:
         delimiter_index = find_mysql_statement_delimiter(text)
-        yield text[:delimiter_index]
+        statement = text[:delimiter_index].strip()
+        if statement:
+            yield statement
         text = text[(delimiter_index+1):]
 
 

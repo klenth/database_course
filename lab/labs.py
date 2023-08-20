@@ -86,6 +86,9 @@ class QueryResults:
                 for row in cursor.fetchmany(size=settings.LAB_MAX_QUERY_ROWS)
             ]
             incomplete = cursor.fetchone() is not None
+
+            while cursor.fetchone():
+                pass
         else:
             rows = []
             incomplete = False
@@ -263,7 +266,7 @@ def load_test_case_data(test_case, *, cursor):
 
 def compute_results(problem):
     with get_database_connection() as conn:
-        c = conn.cursor()
+        c = conn.cursor(buffered=True)
         for test_case in problem.test_cases.all():
             if test_case.result_data_file:
                 # We already have the results for this test case
@@ -321,7 +324,7 @@ def score_test_case(attempt, test_case):
     fetch_data = (test_case.type == models.ProblemTestCase.TEST_CASE_TYPE_TABLE_DATA)
     instr_results, student_results = None, None
     with get_database_connection() as conn:
-        c = conn.cursor()
+        c = conn.cursor(buffered=True)
         with temporary_database(prefix='student_run_', cursor=c) as db:
             conn.database = db.name
             try:
@@ -381,7 +384,7 @@ def score_test_case(attempt, test_case):
 def validate_schema(problem_schema):
     def work():
         with get_database_connection() as conn:
-            c = conn.cursor()
+            c = conn.cursor(buffered=True)
             with temporary_database(prefix='schema_validate_', cursor=c) as db:
                 # Execute mysql client on schema file
                 completed_process = None
