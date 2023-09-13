@@ -191,7 +191,7 @@ class StudentDatabase(models.Model):
                 cursor.execute(f"""GRANT ALL ON {db_name}.* TO %s@'localhost'""",
                                (student.username,))
                 proxy = DatabaseProxyUser.proxy_for(student)
-                cursor.execute(f"""GRANT ALL ON {db_name}.* TO %s@'localhost'""",
+                cursor.execute(f"""GRANT ALL ON {db_name}.* TO %s@'%'""",
                                (proxy.username,))
 
             flush_privileges()
