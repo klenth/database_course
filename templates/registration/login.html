@@ -16,7 +16,7 @@
                 {% endif %}
             {% endif %}
 
-            <form action="{% url 'login' %}" method="post">
+            <form id="login_form" action="{% url 'login' %}" method="post">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% if next %}{{ next }}{% else %}{% url 'home' %}{% endif %}">
                 <table>
@@ -40,4 +40,16 @@
             <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
         </div>
     </div>
+    
+    <!-- If someone tries to login with their full email address, strip the "@domain" off -->
+    <script>
+    "use strict";
+    document.querySelector("#login_form").addEventListener("submit", e => {
+        const form = e.target;
+        const usernameBox = form['username'];
+        const index = usernameBox.value.indexOf('@');
+        if (index > 0)
+            usernameBox.value = usernameBox.value.substring(0, index);
+    });
+    </script>
 {% endblock %}
