@@ -13,6 +13,11 @@
 # access, maybe it's OK for student accounts to remain @'localhost', but at a minimum the main database manager user and
 # proxy users need to be more accessible to allow the web app to run on a separate [virtual] host.)
 
+# Update from 10/28/2024: @'%' logins are no longer working when students ssh into the database server (e.g. for access
+# tokens and DB apps) - apparently @'%' doesn't apply to Unix socket connections, and somehow this is the method being
+# used from forward ssh connections? Not having time to run this down right now, but as a fix-for-now am changing tokens
+# back to @'localhost'.
+
 from django.db import models
 from django.contrib.auth import models as auth_models
 from django.db.models.signals import pre_delete, pre_save
@@ -728,9 +733,9 @@ class AccessToken(models.Model):
         token = AccessToken(database=database, write_permission=write_permission, **kwargs)
         with get_db() as db:
             cursor = db.cursor()
-            cursor.execute('''CREATE USER %s@'%' IDENTIFIED BY %s''',
+            cursor.execute('''CREATE USER %s@'localhost' IDENTIFIED BY %s''',
                            (token.username, token.password))
-            cursor.execute('''GRANT {} ON `{}`.* TO %s@'%' '''.format(
+            cursor.execute('''GRANT {} ON `{}`.* TO %s@'localhost' '''.format(
                 'ALL' if write_permission else 'SELECT', database.name
             ), (token.username,))
         token.save()
@@ -742,12 +747,12 @@ class AccessToken(models.Model):
         with get_db() as db:
             cursor = db.cursor()
             if write_permission:
-                cursor.execute('''GRANT ALL ON `{}`.* TO %s@'%' '''.format(self.database.name),
+                cursor.execute('''GRANT ALL ON `{}`.* TO %s@'localhost' '''.format(self.database.name),
                                (self.username,))
             else:
-                cursor.execute('''REVOKE ALL ON `{}`.* FROM %s@'%' '''.format(self.database.name),
+                cursor.execute('''REVOKE ALL ON `{}`.* FROM %s@'localhost' '''.format(self.database.name),
                                (self.username,))
-                cursor.execute('''GRANT SELECT ON `{}`.* TO %s@'%' '''.format(self.database.name),
+                cursor.execute('''GRANT SELECT ON `{}`.* TO %s@'localhost' '''.format(self.database.name),
                                (self.username,))
         self.write_permission = write_permission
         self.save()
@@ -758,7 +763,7 @@ def _access_token_pre_delete(sender, instance, **kwargs):
     with get_db() as db:
         cursor = db.cursor()
         try:
-            cursor.execute('''DROP USER %s@'%' ''', (instance.username,))
+            cursor.execute('''DROP USER %s@'localhost' ''', (instance.username,))
         except mysql.ProgrammingError as e:
             print(e)
 
